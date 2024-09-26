@@ -68,3 +68,65 @@ func TestLoadLatestPackages(t *testing.T) {
 		})
 	}
 }
+
+func TestInitialize(t *testing.T) {
+	tests := []struct {
+		name    string
+		setup   func()
+		wantErr bool
+	}{
+		{
+			name: "Returns error when unable to load latest packages",
+			setup: func() {
+				// setup your LoadLatestPackages mock here to return error
+			},
+			wantErr: true,
+		},
+		{
+			name: "Returns error when unable to parse CSV",
+			setup: func() {
+				// setup your LoadLatestPackages mock here to return a valid path
+				// setup your ParseCSV mock here to return error
+				_ = os.MkdirAll("data/packages", os.ModePerm)
+				files := []string{"20230101.csv"}
+				for _, file := range files {
+					_ = os.WriteFile(filepath.Join("data/packages", file), []byte{}, os.ModePerm)
+				}
+			},
+			wantErr: true,
+		},
+		{
+			name: "Successful initialization",
+			setup: func() {
+				// setup your LoadLatestPackages mock here to return a valid path
+				// setup your ParseCSV mock here to return a valid list of packages
+				_ = os.MkdirAll("data/packages", os.ModePerm)
+				files := []string{"20230101.csv"}
+				for _, file := range files {
+					_ = os.WriteFile(filepath.Join("data/packages", file), []byte("Name,Bandwidth,Price,Usage,Type,RealIP\nhome10,10Mbps,500,home,shared,false\n"), os.ModePerm)
+				}
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setup()
+			defer func() {
+				err := os.RemoveAll("data/packages")
+				if err != nil {
+
+				}
+			}()
+
+			err := Initialize()
+
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
