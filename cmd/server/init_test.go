@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// Test for LoadLatestPackages function
 func TestLoadLatestPackages(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -19,7 +20,7 @@ func TestLoadLatestPackages(t *testing.T) {
 		{
 			name: "Return error when no csv files",
 			setup: func() {
-				_ = os.MkdirAll("data/packages", os.ModePerm)
+				createDir(t, "data/packages")
 			},
 			want:    "",
 			wantErr: true,
@@ -27,10 +28,10 @@ func TestLoadLatestPackages(t *testing.T) {
 		{
 			name: "Return latest file",
 			setup: func() {
-				_ = os.MkdirAll("data/packages", os.ModePerm)
+				createDir(t, "data/packages")
 				files := []string{"20230101.csv", "20230201.csv"}
 				for _, file := range files {
-					_ = os.WriteFile(filepath.Join("data/packages", file), []byte{}, os.ModePerm)
+					writeFile(t, filepath.Join("data/packages", file), []byte{})
 				}
 			},
 			want:    "data/packages/20230201.csv",
@@ -39,10 +40,10 @@ func TestLoadLatestPackages(t *testing.T) {
 		{
 			name: "Return File Outside the Date Scope",
 			setup: func() {
-				_ = os.MkdirAll("data/packages", os.ModePerm)
+				createDir(t, "data/packages")
 				files := []string{"abc.csv", "11.csv"}
 				for _, file := range files {
-					_ = os.WriteFile(filepath.Join("data/packages", file), []byte{}, os.ModePerm)
+					writeFile(t, filepath.Join("data/packages", file), []byte{})
 				}
 			},
 			want:    "",
@@ -53,7 +54,7 @@ func TestLoadLatestPackages(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.setup()
-			defer os.RemoveAll("data/packages")
+			defer cleanupDir(t, "data")
 
 			got, err := LoadLatestPackages()
 
@@ -69,48 +70,53 @@ func TestLoadLatestPackages(t *testing.T) {
 	}
 }
 
+// Test for Initialize function
 func TestInitialize(t *testing.T) {
 	tests := []struct {
 		name    string
-		setup   func()
+		setup   func(t *testing.T)
 		wantErr bool
 	}{
 		{
 			name: "Returns error when unable to load latest packages",
-			setup: func() {
+			setup: func(t *testing.T) {
+				// Simulate inability to load latest packages (e.g., by not creating any file)
 			},
 			wantErr: true,
 		},
 		{
 			name: "Returns error when unable to parse CSV",
-			setup: func() {
-				_ = os.MkdirAll("data/packages", os.ModePerm)
-				files := []string{"20230101.csv"}
-				for _, file := range files {
-					_ = os.WriteFile(filepath.Join("data/packages", file), []byte{}, os.ModePerm)
-				}
+			setup: func(t *testing.T) {
+				dirPath := "data/packages"
+				createDir(t, dirPath)
+				filePath := filepath.Join(dirPath, "20230101.csv")
+				writeFile(t, filePath, []byte{})
 			},
 			wantErr: true,
 		},
 		{
 			name: "Successful initialization",
-			setup: func() {
-				_ = os.MkdirAll("data/packages", os.ModePerm)
-				files := []string{"20230101.csv"}
-				for _, file := range files {
-					_ = os.WriteFile(filepath.Join("data/packages", file), []byte("Name,Bandwidth,Price,Usage,Type,RealIP\nhome10,10Mbps,500,home,shared,false\nbusiness100,100Mbps,3500,business,dedicate,true\n"), os.ModePerm)
-				}
+			setup: func(t *testing.T) {
+				dirPath := "data/packages"
+				createDir(t, dirPath)
+				fileContent := `Name,Bandwidth,Price,Usage,Type,RealIP
+home10,10Mbps,500,home,shared,false
+business100,100Mbps,3500,business,dedicate,true
+`
+				filePath := filepath.Join(dirPath, "20230101.csv")
+				writeFile(t, filePath, []byte(fileContent))
 			},
 			wantErr: false,
 		},
 		{
 			name: "Initialize error - invalid packages file",
-			setup: func() {
-				_ = os.MkdirAll("data/packages", os.ModePerm)
-				files := []string{"20230101.csv"}
-				for _, file := range files {
-					_ = os.WriteFile(filepath.Join("data/packages", file), []byte("Name,Bandwidth,Price,Usage,Type,RealIP\nInvalid Data Line"), os.ModePerm)
-				}
+			setup: func(t *testing.T) {
+				dirPath := "data/packages"
+				createDir(t, dirPath)
+				fileContent := `Name,Bandwidth,Price,Usage,Type,RealIP
+Invalid Data Line`
+				filePath := filepath.Join(dirPath, "20230101.csv")
+				writeFile(t, filePath, []byte(fileContent))
 			},
 			wantErr: true,
 		},
@@ -118,13 +124,9 @@ func TestInitialize(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.setup()
-			defer func() {
-				err := os.RemoveAll("data/packages")
-				if err != nil {
+			tt.setup(t)
 
-				}
-			}()
+			defer cleanupDir(t, "data")
 
 			err := Initialize()
 
@@ -137,6 +139,35 @@ func TestInitialize(t *testing.T) {
 	}
 }
 
+// Helper function to create directories
+func createDir(t *testing.T, dirPath string) {
+	err := os.MkdirAll(dirPath, os.ModePerm)
+	if err != nil {
+		t.Fatalf("Failed to create directory: %v", err)
+	}
+	// Ensure the created directory is cleaned up after the test
+	t.Cleanup(func() {
+		cleanupDir(t, dirPath)
+	})
+}
+
+// Helper function to write content to files
+func writeFile(t *testing.T, filePath string, content []byte) {
+	err := os.WriteFile(filePath, content, os.ModePerm)
+	if err != nil {
+		t.Fatalf("Failed to create file: %v", err)
+	}
+}
+
+// Helper function to clean up directories
+func cleanupDir(t *testing.T, dirPath string) {
+	err := os.RemoveAll(dirPath)
+	if err != nil {
+		return
+	}
+}
+
+// Test for ParseCSV function
 func TestParseCSV(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -162,10 +193,12 @@ func TestParseCSV(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_ = os.MkdirAll("data/packages", os.ModePerm)
+			createDir(t, "data/packages")
 			tmpfile, _ := os.Create("data/packages/tmp.csv")
 			tmpfile.WriteString(tt.fileSet)
 			tmpfile.Close()
+
+			defer cleanupDir(t, "data")
 
 			if strings.TrimSpace(tt.fileSet) == "" {
 				_, err := ParseCSV("data/packages/tmp.csv")
@@ -178,8 +211,6 @@ func TestParseCSV(t *testing.T) {
 					assert.NoError(t, err)
 				}
 			}
-
-			_ = os.Remove("data/packages/tmp.csv")
 		})
 	}
 }
