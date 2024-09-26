@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestLoadLatestPackages(t *testing.T) {
@@ -57,13 +59,12 @@ func TestLoadLatestPackages(t *testing.T) {
 
 			got, err := LoadLatestPackages()
 
-			if (err != nil) != tt.wantErr {
-				t.Errorf("LoadLatestPackages() error = %v, wantErr %v", err, tt.wantErr)
-				return
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
 			}
-			if got != tt.want {
-				t.Errorf("LoadLatestPackages() = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
