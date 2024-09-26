@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/gocarina/gocsv"
 	"github.com/timam/uttaracloud-finance-backend/pkg/models"
-	"github.com/timam/uttaracloud-finance-backend/pkg/repos"
 	"github.com/timam/uttaracloud-finance-backend/pkg/storage"
 	"os"
 	"path/filepath"
@@ -69,11 +68,6 @@ func Initialize() error {
 	packages, err := ParseCSV(latestPackagesFile)
 	if err != nil {
 		return fmt.Errorf("failed to parse packages from CSV: %v", err)
-	}
-
-	err = repos.LoadLatestPackages(latestPackagesFile) // Assuming this function is still needed
-	if err != nil {
-		return fmt.Errorf("failed to load latest packages: %v", err)
 	}
 
 	storage.LoadedPackages = packages
