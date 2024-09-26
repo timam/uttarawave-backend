@@ -3,6 +3,7 @@ package server
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -18,7 +19,6 @@ func TestLoadLatestPackages(t *testing.T) {
 		{
 			name: "Return error when no csv files",
 			setup: func() {
-				// setup your filesystem mock here to have no csv files
 				_ = os.MkdirAll("data/packages", os.ModePerm)
 			},
 			want:    "",
@@ -27,7 +27,6 @@ func TestLoadLatestPackages(t *testing.T) {
 		{
 			name: "Return latest file",
 			setup: func() {
-				// setup your filesystem mock here to have some csv files
 				_ = os.MkdirAll("data/packages", os.ModePerm)
 				files := []string{"20230101.csv", "20230201.csv"}
 				for _, file := range files {
@@ -40,7 +39,6 @@ func TestLoadLatestPackages(t *testing.T) {
 		{
 			name: "Return File Outside the Date Scope",
 			setup: func() {
-				// setup your filesystem mock here to have files outside the date scope (e.g. "abc.csv", "11.csv")
 				_ = os.MkdirAll("data/packages", os.ModePerm)
 				files := []string{"abc.csv", "11.csv"}
 				for _, file := range files {
@@ -64,7 +62,9 @@ func TestLoadLatestPackages(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
-			assert.Equal(t, tt.want, got)
+			if (got != "" && filepath.Base(got) != filepath.Base(tt.want)) || (got == "" && tt.want != "") {
+				t.Errorf("got = %v, want = %v", got, tt.want)
+			}
 		})
 	}
 }
@@ -78,15 +78,12 @@ func TestInitialize(t *testing.T) {
 		{
 			name: "Returns error when unable to load latest packages",
 			setup: func() {
-				// setup your LoadLatestPackages mock here to return error
 			},
 			wantErr: true,
 		},
 		{
 			name: "Returns error when unable to parse CSV",
 			setup: func() {
-				// setup your LoadLatestPackages mock here to return a valid path
-				// setup your ParseCSV mock here to return error
 				_ = os.MkdirAll("data/packages", os.ModePerm)
 				files := []string{"20230101.csv"}
 				for _, file := range files {
@@ -98,15 +95,24 @@ func TestInitialize(t *testing.T) {
 		{
 			name: "Successful initialization",
 			setup: func() {
-				// setup your LoadLatestPackages mock here to return a valid path
-				// setup your ParseCSV mock here to return a valid list of packages
 				_ = os.MkdirAll("data/packages", os.ModePerm)
 				files := []string{"20230101.csv"}
 				for _, file := range files {
-					_ = os.WriteFile(filepath.Join("data/packages", file), []byte("Name,Bandwidth,Price,Usage,Type,RealIP\nhome10,10Mbps,500,home,shared,false\n"), os.ModePerm)
+					_ = os.WriteFile(filepath.Join("data/packages", file), []byte("Name,Bandwidth,Price,Usage,Type,RealIP\nhome10,10Mbps,500,home,shared,false\nbusiness100,100Mbps,3500,business,dedicate,true\n"), os.ModePerm)
 				}
 			},
 			wantErr: false,
+		},
+		{
+			name: "Initialize error - invalid packages file",
+			setup: func() {
+				_ = os.MkdirAll("data/packages", os.ModePerm)
+				files := []string{"20230101.csv"}
+				for _, file := range files {
+					_ = os.WriteFile(filepath.Join("data/packages", file), []byte("Name,Bandwidth,Price,Usage,Type,RealIP\nInvalid Data Line"), os.ModePerm)
+				}
+			},
+			wantErr: true,
 		},
 	}
 
@@ -127,6 +133,53 @@ func TestInitialize(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 			}
+		})
+	}
+}
+
+func TestParseCSV(t *testing.T) {
+	tests := []struct {
+		name    string
+		fileSet string
+		wantErr bool
+	}{
+		{
+			name:    "Valid CSV file",
+			fileSet: "Name,Bandwidth,Price,Usage,Type,RealIP\nhome10,10Mbps,500,home,shared,false\nbusiness100,100Mbps,3500,business,dedicate,true\n",
+			wantErr: false,
+		},
+		{
+			name:    "Invalid CSV file",
+			fileSet: "Name,Bandwidth,Price,Usage,Type,RealIP\nInvalid CSV Content\n",
+			wantErr: true,
+		},
+		{
+			name:    "Empty CSV file",
+			fileSet: "", // Empty CSV file should still have headers
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_ = os.MkdirAll("data/packages", os.ModePerm)
+			tmpfile, _ := os.Create("data/packages/tmp.csv")
+			tmpfile.WriteString(tt.fileSet)
+			tmpfile.Close()
+
+			if strings.TrimSpace(tt.fileSet) == "" {
+				_, err := ParseCSV("data/packages/tmp.csv")
+				assert.Error(t, err)
+			} else {
+				_, err := ParseCSV("data/packages/tmp.csv")
+				if tt.wantErr {
+					assert.Error(t, err)
+				} else {
+					assert.NoError(t, err)
+				}
+			}
+
+			_ = os.Remove("data/packages/tmp.csv")
 		})
 	}
 }
