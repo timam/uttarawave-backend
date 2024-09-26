@@ -7,37 +7,33 @@ import (
 	"github.com/timam/uttaracloud-finance-backend/pkg/storage"
 	"os"
 	"path/filepath"
-	"time"
+	"strings"
 )
 
 func LoadLatestPackages() (string, error) {
 	var latestFile string
-	var latestTime time.Time
 
 	err := filepath.Walk("data/packages", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-
 		if !info.IsDir() && filepath.Ext(path) == ".csv" {
-			fileTime := info.ModTime()
-			if fileTime.After(latestTime) {
-				latestTime = fileTime
-				latestFile = path
+			filename := filepath.Base(path)
+			if len(filename) == len("YYYYMMDD.csv") && strings.HasSuffix(filename, ".csv") {
+				if filename > latestFile {
+					latestFile = filename
+				}
 			}
 		}
 		return nil
 	})
-
 	if err != nil {
 		return "", err
 	}
-
 	if latestFile == "" {
 		return "", fmt.Errorf("no CSV files found in 'data/packages' directory")
 	}
-
-	return latestFile, nil
+	return filepath.Join("data/packages", latestFile), nil
 }
 
 func ParseCSV(filePath string) ([]models.Package, error) {
