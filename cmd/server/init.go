@@ -2,7 +2,10 @@ package server
 
 import (
 	"fmt"
+	"github.com/gocarina/gocsv"
+	"github.com/timam/uttaracloud-finance-backend/pkg/models"
 	"github.com/timam/uttaracloud-finance-backend/pkg/repos"
+	"github.com/timam/uttaracloud-finance-backend/pkg/storage"
 	"os"
 	"path/filepath"
 	"time"
@@ -38,15 +41,42 @@ func LoadLatestPackages() (string, error) {
 	return latestFile, nil
 }
 
+func ParseCSV(filePath string) ([]models.Package, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var packages []*models.Package
+	if err := gocsv.UnmarshalFile(file, &packages); err != nil {
+		return nil, err
+	}
+
+	var result []models.Package
+	for _, pkg := range packages {
+		result = append(result, *pkg)
+	}
+	return result, nil
+}
+
 func Initialize() error {
-	latestPackages, err := LoadLatestPackages()
+	latestPackagesFile, err := LoadLatestPackages()
 	if err != nil {
 		return fmt.Errorf("failed to load latest packages: %v", err)
 	}
 
-	err = repos.LoadLatestPackages(latestPackages)
+	packages, err := ParseCSV(latestPackagesFile)
+	if err != nil {
+		return fmt.Errorf("failed to parse packages from CSV: %v", err)
+	}
+
+	err = repos.LoadLatestPackages(latestPackagesFile) // Assuming this function is still needed
 	if err != nil {
 		return fmt.Errorf("failed to load latest packages: %v", err)
 	}
+
+	storage.LoadedPackages = packages
+
 	return nil
 }
