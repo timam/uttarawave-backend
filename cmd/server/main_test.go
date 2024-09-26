@@ -11,10 +11,15 @@ import (
 )
 
 // mockRouter to prevent blocking in tests
-type mockRouter struct{}
+type mockRouter struct {
+	shouldFail bool
+}
 
 func (m *mockRouter) Run(addr string) error {
 	// Simulating no-op router run to avoid blocking
+	if m.shouldFail {
+		return errors.New("router failure")
+	}
 	return nil
 }
 
@@ -29,7 +34,6 @@ func startServerWithMockLogger(initFunc func() error, router interface{ Run(stri
 		mockLogFatalf(logger, "Initialization failed: %v", err)
 		return err
 	}
-
 	logger.Println("Starting server...")
 	err = router.Run(":8080")
 	if err != nil {
@@ -43,17 +47,22 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestStartServer(t *testing.T) {
-	tests := []struct {
+func TestStartServerWithMockLogger(t *testing.T) {
+	type startServerTest struct {
 		name           string
 		initFunc       func() error
+		router         func() interface{ Run(string) error }
 		expectedLogMsg string
 		expectError    bool
-	}{
+	}
+	tests := []startServerTest{
 		{
 			name: "Initialization failure",
 			initFunc: func() error {
 				return errors.New("initialization failed")
+			},
+			router: func() interface{ Run(string) error } {
+				return &mockRouter{}
 			},
 			expectedLogMsg: "Initialization failed: initialization failed",
 			expectError:    true,
@@ -63,31 +72,50 @@ func TestStartServer(t *testing.T) {
 			initFunc: func() error {
 				return nil
 			},
+			router: func() interface{ Run(string) error } {
+				return &mockRouter{}
+			},
 			expectedLogMsg: "Starting server...",
 			expectError:    false,
 		},
+		{
+			name: "Router failure",
+			initFunc: func() error {
+				return nil
+			},
+			router: func() interface{ Run(string) error } {
+				return &mockRouter{shouldFail: true}
+			},
+			expectedLogMsg: "Failed to start server: router failure",
+			expectError:    true,
+		},
+		{
+			name: "No error",
+			initFunc: func() error {
+				return nil
+			},
+			router: func() interface{ Run(string) error } {
+				return &mockRouter{}
+			},
+			expectedLogMsg: "",
+			expectError:    false,
+		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Log("Starting test:", tt.name) // Initial debug statement
-
 			// Capture log output
 			var buf bytes.Buffer
 			logger := log.New(&buf, "", log.LstdFlags)
 			log.SetOutput(&buf)
 			defer log.SetOutput(os.Stderr)
-
 			t.Log("Calling startServer with injected initFunc")
 			go func() {
-				_ = startServerWithMockLogger(tt.initFunc, &mockRouter{}, logger)
+				_ = startServerWithMockLogger(tt.initFunc, tt.router(), logger)
 			}()
-
 			// Add a small sleep to capture logs (this is a bit hacky but should work for now)
 			time.Sleep(1 * time.Second)
-
 			t.Log("Returned from startServer call")
-
 			logOutput := buf.String()
 			t.Logf("Captured log output: %s", logOutput) // Debug captured logs
 			if !assert.Contains(t, logOutput, tt.expectedLogMsg) {
