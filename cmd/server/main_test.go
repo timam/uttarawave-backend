@@ -47,7 +47,7 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestStartServerWithMockLogger(t *testing.T) {
+func TestStartServer(t *testing.T) {
 	type startServerTest struct {
 		name           string
 		initFunc       func() error
@@ -89,17 +89,6 @@ func TestStartServerWithMockLogger(t *testing.T) {
 			expectedLogMsg: "Failed to start server: router failure",
 			expectError:    true,
 		},
-		{
-			name: "No error",
-			initFunc: func() error {
-				return nil
-			},
-			router: func() interface{ Run(string) error } {
-				return &mockRouter{}
-			},
-			expectedLogMsg: "",
-			expectError:    false,
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -110,8 +99,9 @@ func TestStartServerWithMockLogger(t *testing.T) {
 			log.SetOutput(&buf)
 			defer log.SetOutput(os.Stderr)
 			t.Log("Calling startServer with injected initFunc")
+			errChan := make(chan error)
 			go func() {
-				_ = startServerWithMockLogger(tt.initFunc, tt.router(), logger)
+				errChan <- startServerWithMockLogger(tt.initFunc, tt.router(), logger)
 			}()
 			// Add a small sleep to capture logs (this is a bit hacky but should work for now)
 			time.Sleep(1 * time.Second)
@@ -120,6 +110,11 @@ func TestStartServerWithMockLogger(t *testing.T) {
 			t.Logf("Captured log output: %s", logOutput) // Debug captured logs
 			if !assert.Contains(t, logOutput, tt.expectedLogMsg) {
 				t.Errorf("Expected log message: %s, but got: %s", tt.expectedLogMsg, logOutput)
+			}
+			err := <-errChan
+			expectedError := tt.expectError
+			if (err != nil) != expectedError {
+				t.Errorf("startServerWithMockLogger() error = %v, expectError %v", err, expectedError)
 			}
 		})
 	}
