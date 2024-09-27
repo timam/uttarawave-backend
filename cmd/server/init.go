@@ -3,8 +3,8 @@ package server
 import (
 	"fmt"
 	"github.com/gocarina/gocsv"
-	"github.com/timam/uttaracloud-finance-backend/pkg/models"
-	"github.com/timam/uttaracloud-finance-backend/pkg/storage"
+	"github.com/timam/uttaracloud-finance-backend/models"
+	"github.com/timam/uttaracloud-finance-backend/storage"
 	"os"
 	"path/filepath"
 	"strings"

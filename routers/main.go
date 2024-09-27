@@ -2,7 +2,7 @@ package routers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/timam/uttaracloud-finance-backend/pkg/handlers"
+	"github.com/timam/uttaracloud-finance-backend/handlers"
 )
 
 func InitRouter() *gin.Engine {

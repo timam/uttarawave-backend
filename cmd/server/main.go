@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/timam/uttaracloud-finance-backend/pkg/routers"
+	"github.com/timam/uttaracloud-finance-backend/routers"
 	"log"
 )
 
