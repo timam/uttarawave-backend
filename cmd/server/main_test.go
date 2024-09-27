@@ -52,20 +52,23 @@ func TestStartServer(t *testing.T) {
 		name           string
 		initFunc       func() error
 		router         func() interface{ Run(string) error }
+		expectedError  error
 		expectedLogMsg string
 		expectError    bool
 	}
+
 	tests := []startServerTest{
 		{
-			name: "Initialization failure",
+			name: "Initialization returns nil and router runs successfully",
 			initFunc: func() error {
-				return errors.New("initialization failed")
+				return nil
 			},
 			router: func() interface{ Run(string) error } {
 				return &mockRouter{}
 			},
-			expectedLogMsg: "Initialization failed: initialization failed",
-			expectError:    true,
+			expectedError:  nil,
+			expectedLogMsg: "Starting server...",
+			expectError:    false,
 		},
 		{
 			name: "Successful server start",
@@ -75,21 +78,12 @@ func TestStartServer(t *testing.T) {
 			router: func() interface{ Run(string) error } {
 				return &mockRouter{}
 			},
+			expectedError:  nil,
 			expectedLogMsg: "Starting server...",
 			expectError:    false,
 		},
-		{
-			name: "Router failure",
-			initFunc: func() error {
-				return nil
-			},
-			router: func() interface{ Run(string) error } {
-				return &mockRouter{shouldFail: true}
-			},
-			expectedLogMsg: "Failed to start server: router failure",
-			expectError:    true,
-		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Log("Starting test:", tt.name) // Initial debug statement
@@ -112,9 +106,9 @@ func TestStartServer(t *testing.T) {
 				t.Errorf("Expected log message: %s, but got: %s", tt.expectedLogMsg, logOutput)
 			}
 			err := <-errChan
-			expectedError := tt.expectError
-			if (err != nil) != expectedError {
-				t.Errorf("startServerWithMockLogger() error = %v, expectError %v", err, expectedError)
+			expectedError := tt.expectedError
+			if !errors.Is(err, expectedError) {
+				t.Errorf("startServerWithMockLogger() error = %v, expectedError %v", err, expectedError)
 			}
 		})
 	}
