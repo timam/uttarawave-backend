@@ -25,7 +25,7 @@ type InternetPackage struct {
 }
 
 type CableTVPackage struct {
-	Name    string `csv:"PackageName"`
-	Price   string `csv:"Price"`
-	TVCount string `csv:"TVCount"`
+	PackageName string `csv:"PackageName"`
+	Price       string `csv:"Price"`
+	TVCount     string `csv:"TVCount"`
 }
