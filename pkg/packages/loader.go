@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func LoadCurrentPackages() (string, error) {
+func LoadCurrentInternetPackages() (string, error) {
 	var latestFile string
 
 	err := filepath.Walk("data/packages/internet", func(path string, info os.FileInfo, err error) error {
@@ -35,7 +35,7 @@ func LoadCurrentPackages() (string, error) {
 	return filepath.Join("data/packages/internet", latestFile), nil
 }
 
-func ParseCSV(filePath string) ([]models.InternetPackage, error) {
+func InternetPackageParser(filePath string) ([]models.InternetPackage, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err

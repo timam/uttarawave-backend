@@ -7,17 +7,17 @@ import (
 )
 
 func Initialize() error {
-	latestPackagesFile, err := packages.LoadCurrentPackages()
+	currentInternetPackagesFile, err := packages.LoadCurrentInternetPackages()
 	if err != nil {
 		return fmt.Errorf("failed to load latest packages: %v", err)
 	}
 
-	pack, err := packages.ParseCSV(latestPackagesFile)
+	currentInternetPackages, err := packages.InternetPackageParser(currentInternetPackagesFile)
 	if err != nil {
 		return fmt.Errorf("failed to parse packages from CSV: %v", err)
 	}
 
-	storage.LoadedPackages = pack
+	storage.InternetPackages = currentInternetPackages
 
 	return nil
 }
