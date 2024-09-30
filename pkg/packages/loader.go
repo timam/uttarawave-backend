@@ -9,10 +9,10 @@ import (
 	"strings"
 )
 
-func LoadLatestPackages() (string, error) {
+func LoadCurrentPackages() (string, error) {
 	var latestFile string
 
-	err := filepath.Walk("data/packages", func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk("data/packages/internet", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -32,22 +32,22 @@ func LoadLatestPackages() (string, error) {
 	if latestFile == "" {
 		return "", fmt.Errorf("no CSV files found in 'data/packages' directory")
 	}
-	return filepath.Join("data/packages", latestFile), nil
+	return filepath.Join("data/packages/internet", latestFile), nil
 }
 
-func ParseCSV(filePath string) ([]models.Package, error) {
+func ParseCSV(filePath string) ([]models.InternetPackage, error) {
 	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
 
-	var packages []*models.Package
+	var packages []*models.InternetPackage
 	if err := gocsv.UnmarshalFile(file, &packages); err != nil {
 		return nil, err
 	}
 
-	var result []models.Package
+	var result []models.InternetPackage
 	for _, pkg := range packages {
 		result = append(result, *pkg)
 	}

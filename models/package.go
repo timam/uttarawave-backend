@@ -1,24 +1,31 @@
 package models
 
-type Usage string
+type ConnectionType string
 
 const (
-	Home     Usage = "home"
-	Business Usage = "business"
+	Home      ConnectionType = "home"
+	Business  ConnectionType = "business"
+	Corporate ConnectionType = "corporate"
 )
 
-type Type string
+type BandwidthType string
 
 const (
-	Shared    Type = "shared"
-	Dedicated Type = "dedicated"
+	Shared    BandwidthType = "shared"
+	Dedicated BandwidthType = "dedicated"
 )
 
-type Package struct {
-	Name      string `csv:"Name"`
-	Bandwidth string `csv:"Bandwidth"` // e.g., "10Mbps"
-	Price     string `csv:"Price"`
-	Usage     Usage  `csv:"Usage"`
-	Type      Type   `csv:"Type"`
-	RealIP    string `csv:"RealIP"`
+type InternetPackage struct {
+	PackageName    string         `csv:"PackageName"`
+	Bandwidth      string         `csv:"Bandwidth"` // e.g., "10Mbps"
+	Price          string         `csv:"Price"`
+	ConnectionType ConnectionType `csv:"ConnectionType"`
+	BandwidthType  BandwidthType  `csv:"BandwidthType"`
+	RealIP         string         `csv:"RealIP"`
+}
+
+type CableTVPackage struct {
+	Name    string `csv:"PackageName"`
+	Price   string `csv:"Price"`
+	TVCount string `csv:"TVCount"`
 }

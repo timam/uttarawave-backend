@@ -7,7 +7,7 @@ import (
 )
 
 func Initialize() error {
-	latestPackagesFile, err := packages.LoadLatestPackages()
+	latestPackagesFile, err := packages.LoadCurrentPackages()
 	if err != nil {
 		return fmt.Errorf("failed to load latest packages: %v", err)
 	}
