@@ -6,7 +6,7 @@ import (
 )
 
 func StartServer() {
-	err := Initialize()
+	err := InitializePackages()
 	if err != nil {
 		log.Fatalf("Initialization failed: %v", err)
 	}

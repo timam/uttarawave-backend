@@ -8,6 +8,6 @@ import (
 
 func PackagesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
-		"packages": storage.InternetPackages,
+		"packages": storage.CurrentInternetPackages,
 	})
 }
