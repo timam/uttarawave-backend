@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/timam/uttaracloud-finance-backend/pkg/packages"
 	"os"
 	"path/filepath"
 	"strings"
@@ -55,7 +56,7 @@ func TestLoadLatestPackages(t *testing.T) {
 			tt.setup()
 			defer cleanupDir(t, "data")
 
-			got, err := LoadLatestPackages()
+			got, err := packages.LoadLatestPackages()
 
 			if tt.wantErr {
 				assert.Error(t, err)
@@ -200,10 +201,10 @@ func TestParseCSV(t *testing.T) {
 			defer cleanupDir(t, "data")
 
 			if strings.TrimSpace(tt.fileSet) == "" {
-				_, err := ParseCSV("data/packages/tmp.csv")
+				_, err := packages.ParseCSV("data/packages/tmp.csv")
 				assert.Error(t, err)
 			} else {
-				_, err := ParseCSV("data/packages/tmp.csv")
+				_, err := packages.ParseCSV("data/packages/tmp.csv")
 				if tt.wantErr {
 					assert.Error(t, err)
 				} else {
