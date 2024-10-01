@@ -1,12 +1,13 @@
 package server
 
 import (
+	"github.com/timam/uttaracloud-finance-backend/internals/packages"
 	"github.com/timam/uttaracloud-finance-backend/routers"
 	"log"
 )
 
 func StartServer() {
-	err := InitializePackages()
+	err := packages.InitializePackages()
 	if err != nil {
 		log.Fatalf("Initialization failed: %v", err)
 	}

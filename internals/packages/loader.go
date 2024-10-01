@@ -9,6 +9,24 @@ import (
 	"strings"
 )
 
+var CurrentInternetPackages []models.InternetPackage //loading data from cmd/server/main.go
+
+func InitializePackages() error {
+	currentInternetPackagesFile, err := LoadCurrentInternetPackages()
+	if err != nil {
+		return fmt.Errorf("failed to load latest packages: %v", err)
+	}
+
+	currentInternetPackages, err := InternetPackageParser(currentInternetPackagesFile)
+	if err != nil {
+		return fmt.Errorf("failed to parse packages from CSV: %v", err)
+	}
+
+	CurrentInternetPackages = currentInternetPackages
+
+	return nil
+}
+
 func LoadCurrentInternetPackages() (string, error) {
 	var latestFile string
 
