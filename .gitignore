@@ -27,6 +27,6 @@ go.sum
 
 #IDE file
 .idea
-.idea/*
+
 
 
