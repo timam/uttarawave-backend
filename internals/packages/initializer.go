@@ -3,6 +3,7 @@ package packages
 import (
 	"fmt"
 	"github.com/gocarina/gocsv"
+	"github.com/spf13/viper"
 	"github.com/timam/uttaracloud-finance-backend/models"
 	"os"
 	"path/filepath"
@@ -30,7 +31,7 @@ func InitializePackages() error {
 func LoadCurrentInternetPackages() (string, error) {
 	var latestFile string
 
-	err := filepath.Walk("data/packages/internet", func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(viper.GetString("paths.packages.internet"), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -50,7 +51,7 @@ func LoadCurrentInternetPackages() (string, error) {
 	if latestFile == "" {
 		return "", fmt.Errorf("no CSV files found in 'data/packages' directory")
 	}
-	return filepath.Join("data/packages/internet", latestFile), nil
+	return filepath.Join(viper.GetString("paths.packages.internet"), latestFile), nil
 }
 
 func InternetPackageParser(filePath string) ([]models.InternetPackage, error) {

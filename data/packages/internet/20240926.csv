@@ -1,4 +1,4 @@
-Name,Bandwidth,Price,Usage,Type,RealIP
+PackageName,Bandwidth,Price,ConnectionType,BandwidthType,RealIP
 home10,10Mbps,500,home,shared,false
 home12,12Mbps,600,home,shared,false
 home15,15Mbps,700,home,shared,false
