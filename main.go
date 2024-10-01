@@ -7,20 +7,22 @@ import (
 	"go.uber.org/zap"
 )
 
-var log *zap.Logger
-
 func init() {
-	log, err := logger.InitializeLogger()
+	err := logger.InitializeLogger()
 	if err != nil {
 		panic("Failed to initialize logger: " + err.Error())
 	}
+	logger.Info("Logger initialized successfully")
 
 	err = packages.InitializePackages()
 	if err != nil {
-		log.Error("Initialization failed: %v", zap.Error(err))
+		logger.Error("Packages initialization failed", zap.Error(err))
 	}
+	logger.Info("Package initialized successfully")
+
 }
 
 func main() {
+	logger.Info("Starting server...")
 	server.StartServer()
 }
