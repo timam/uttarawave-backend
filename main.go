@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/timam/uttaracloud-finance-backend/cmd/server"
 	"github.com/timam/uttaracloud-finance-backend/internals/packages"
 	"log"
@@ -15,6 +14,5 @@ func init() {
 
 }
 func main() {
-	fmt.Println("Bipul")
 	server.StartServer()
 }
