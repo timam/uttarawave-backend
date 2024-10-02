@@ -1,3 +1,7 @@
 server:
   debug: false
   port: 8080
+
+database:
+  dynamodb:
+    region: us-west-2
