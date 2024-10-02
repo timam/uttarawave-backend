@@ -3,8 +3,8 @@ package configs
 import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"github.com/timam/uttaracloud-finance-backend/cmd/server"
-	"github.com/timam/uttaracloud-finance-backend/pkg/logger"
+	"github.com/timam/uttarawave-finance-backend/cmd/server"
+	"github.com/timam/uttarawave-finance-backend/pkg/logger"
 	"go.uber.org/zap"
 	"os"
 	"path/filepath"

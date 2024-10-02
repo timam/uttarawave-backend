@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/timam/uttaracloud-finance-backend/internals/packages"
-	"github.com/timam/uttaracloud-finance-backend/models"
+	"github.com/timam/uttarawave-finance-backend/internals/packages"
+	"github.com/timam/uttarawave-finance-backend/models"
 	"net/http"
 )
 

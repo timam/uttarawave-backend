@@ -1,4 +1,4 @@
-module github.com/timam/uttaracloud-finance-backend
+module github.com/timam/uttarawave-finance-backend
 
 go 1.23
 
