@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func PackagesHandler(c *gin.Context) {
+func CurrentInternetPackagesHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"packages": packages.CurrentInternetPackages,
 	})

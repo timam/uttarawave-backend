@@ -30,7 +30,7 @@ func InitRouter() *gin.Engine {
 
 	packageRoutes := apiV1.Group("/packages")
 	{
-		packageRoutes.GET("/", handlers.PackagesHandler)
+		packageRoutes.GET("/internet", handlers.CurrentInternetPackagesHandler)
 	}
 
 	logger.Info("Router initialized successfully")
