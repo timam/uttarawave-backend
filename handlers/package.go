@@ -11,3 +11,9 @@ func CurrentInternetPackagesHandler(c *gin.Context) {
 		"packages": packages.CurrentInternetPackages,
 	})
 }
+
+func CurrentCableTVPackagesHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"packages": packages.CurrentCableTVPackages,
+	})
+}
