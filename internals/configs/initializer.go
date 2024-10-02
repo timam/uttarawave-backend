@@ -3,6 +3,7 @@ package configs
 import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
+	"github.com/timam/uttaracloud-finance-backend/cmd/server"
 	"github.com/timam/uttaracloud-finance-backend/pkg/logger"
 	"go.uber.org/zap"
 	"os"
@@ -53,9 +54,15 @@ func loadIndividualConfig(path string) error {
 		if err := vip.ReadInConfig(); err != nil {
 			logger.Error("Error re-reading config file", zap.String("file", path), zap.Error(err))
 		} else {
+			oldDebugMode := viper.GetBool("server.debug")
 			for _, key := range vip.AllKeys() {
 				viper.Set(key, vip.Get(key)) // Re-merge config changes into main viper instance
 				logger.Info("Reloaded config", zap.String("key", key), zap.String("value", vip.GetString(key)))
+			}
+			newDebugMode := viper.GetBool("server.debug")
+			if oldDebugMode != newDebugMode {
+				logger.Info("Debug mode changed, reloading server")
+				server.ReloadServer()
 			}
 		}
 	})
