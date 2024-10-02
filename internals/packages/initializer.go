@@ -13,6 +13,9 @@ import (
 var CurrentInternetPackages []models.InternetPackage
 var CurrentCableTVPackages []models.CableTVPackage
 
+var LatestInternetPackagesFile string
+var LatestCableTVPackagesFile string
+
 func InitializePackages() error {
 	// Initialize Internet packages
 	currentInternetPackagesFile, err := LoadCurrentInternetPackages()
@@ -26,6 +29,7 @@ func InitializePackages() error {
 	}
 
 	CurrentInternetPackages = currentInternetPackages
+	LatestInternetPackagesFile = getFileNameWithoutExtension(currentInternetPackagesFile)
 
 	// Initialize Cable TV packages
 	currentCableTVPackagesFile, err := LoadCurrentCableTVPackages()
@@ -39,6 +43,7 @@ func InitializePackages() error {
 	}
 
 	CurrentCableTVPackages = currentCableTVPackages
+	LatestCableTVPackagesFile = getFileNameWithoutExtension(currentCableTVPackagesFile)
 
 	return nil
 }
@@ -113,4 +118,8 @@ func CableTVPackageParser(filePath string) ([]models.CableTVPackage, error) {
 		result = append(result, *pkg)
 	}
 	return result, nil
+}
+
+func getFileNameWithoutExtension(path string) string {
+	return strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 }
