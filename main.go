@@ -3,8 +3,8 @@ package main
 import (
 	"github.com/timam/uttaracloud-finance-backend/cmd/server"
 	"github.com/timam/uttaracloud-finance-backend/internals/configs"
-	"github.com/timam/uttaracloud-finance-backend/internals/db"
 	"github.com/timam/uttaracloud-finance-backend/internals/packages"
+	"github.com/timam/uttaracloud-finance-backend/pkg/db"
 	"github.com/timam/uttaracloud-finance-backend/pkg/logger"
 	"go.uber.org/zap"
 	"os"
