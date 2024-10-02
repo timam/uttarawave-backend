@@ -19,15 +19,18 @@ func getLogger() *zap.Logger {
 	return loggerInstance
 }
 
-func syncLogger() {
-	if err := loggerInstance.Sync(); err != nil {
+func SyncLogger() {
+	if loggerInstance == nil {
+		return
+	}
+	err := loggerInstance.Sync()
+	if err != nil {
 		if pathErr, ok := err.(*os.PathError); ok && pathErr.Err == syscall.ENOTTY {
 			loggerInstance.Warn("Failed to sync logger; inappropriate ioctl for device")
 		} else {
 			_, _ = os.Stderr.WriteString("Failed to sync logger: " + err.Error() + "\n")
 		}
 	}
-	os.Exit(0) // Ensures that the process exits after syncing
 }
 
 // Convenience functions

@@ -6,6 +6,9 @@ import (
 	"github.com/timam/uttaracloud-finance-backend/internals/packages"
 	"github.com/timam/uttaracloud-finance-backend/pkg/logger"
 	"go.uber.org/zap"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func init() {
@@ -26,10 +29,30 @@ func init() {
 		logger.Error("Packages initialization failed", zap.Error(err))
 	}
 	logger.Info("Package initialized successfully")
-
 }
 
 func main() {
-	server.StartServer()
-	select {}
+	// Start server in a goroutine
+	go server.StartServer()
+
+	// Set up signal handling
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// Wait for interrupt signal
+	sig := <-sigChan
+	logger.Warn("Received signal", zap.String("signal", sig.String()))
+
+	// Shutdown server
+	if err := server.ShutdownServer(); err != nil {
+		logger.Error("Server forced to shutdown", zap.Error(err))
+	} else {
+		logger.Info("Server exited gracefully")
+	}
+
+	// Sync logger
+	logger.SyncLogger()
+
+	// Exit
+	os.Exit(0)
 }

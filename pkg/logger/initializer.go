@@ -22,18 +22,18 @@ func InitializeLogger() error {
 		}
 
 		// Ensure logger synchronization on exit
-		if os.Getenv("SKIP_LOGGER_SYNC") != "true" {
-			go func() {
-				sig := make(chan os.Signal, 1)
-				signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
-				<-sig
-				syncLogger()
-			}()
-		}
+		go handleLoggerSync()
 
 		// Set Gin's default writer to use zap logger
 		gin.DefaultWriter = newZapWriter(loggerInstance, zapcore.InfoLevel)
 		gin.DefaultErrorWriter = newZapWriter(loggerInstance, zapcore.ErrorLevel)
 	})
 	return err
+}
+
+func handleLoggerSync() {
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+	<-sig
+	SyncLogger()
 }
