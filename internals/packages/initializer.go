@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-var CurrentInternetPackages []models.InternetPackage //loading data from cmd/server/main.go
+var CurrentInternetPackages []models.InternetPackage //loading data from cmd/server/server.go
 
 func InitializePackages() error {
 	currentInternetPackagesFile, err := LoadCurrentInternetPackages()
