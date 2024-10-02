@@ -30,9 +30,6 @@ func init() {
 }
 
 func main() {
-	if err := configs.InitializeConfig(); err != nil {
-		logger.Fatal("Error initializing configs", zap.Error(err))
-	}
 	server.StartServer()
 	select {}
 }

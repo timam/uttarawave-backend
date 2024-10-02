@@ -31,6 +31,9 @@ func InitializeConfig() error {
 	return nil
 }
 
+// Add a global variable to store the previous server state
+var previousServerConfig string
+
 func loadIndividualConfig(path string) error {
 	vip := viper.New()
 	vip.SetConfigFile(path)
@@ -45,6 +48,9 @@ func loadIndividualConfig(path string) error {
 		logger.Info("Loaded config", zap.String("key", key), zap.String("value", vip.GetString(key)))
 	}
 
+	// Serialize the current server configuration
+	currentServerConfig := viper.GetString("server.debug") + viper.GetString("server.port")
+
 	vip.AutomaticEnv() // To read from environment variables
 
 	vip.WatchConfig()
@@ -54,15 +60,19 @@ func loadIndividualConfig(path string) error {
 		if err := vip.ReadInConfig(); err != nil {
 			logger.Error("Error re-reading config file", zap.String("file", path), zap.Error(err))
 		} else {
-			oldDebugMode := viper.GetBool("server.debug")
-			for _, key := range vip.AllKeys() {
-				viper.Set(key, vip.Get(key)) // Re-merge config changes into main viper instance
-				logger.Info("Reloaded config", zap.String("key", key), zap.String("value", vip.GetString(key)))
-			}
-			newDebugMode := viper.GetBool("server.debug")
-			if oldDebugMode != newDebugMode {
-				logger.Info("Debug mode changed, reloading server")
+			// Re-serialize the new server configuration
+			newServerConfig := vip.GetString("server.debug") + vip.GetString("server.port")
+
+			if newServerConfig != currentServerConfig {
+				for _, key := range vip.AllKeys() {
+					viper.Set(key, vip.Get(key)) // Re-merge config changes into main viper instance
+					logger.Info("Reloaded config", zap.String("key", key), zap.String("value", vip.GetString(key)))
+				}
+				logger.Info("Server configuration changed, reloading server")
 				server.ReloadServer()
+				currentServerConfig = newServerConfig // Update the stored config
+			} else {
+				logger.Info("No change in server-relevant configuration, no need to reload server")
 			}
 		}
 	})
