@@ -7,6 +7,7 @@ import (
 	"github.com/timam/uttaracloud-finance-backend/routers"
 	"go.uber.org/zap"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -26,10 +27,11 @@ func StartServer() {
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("Failed to start server: %v", zap.Error(err))
+			os.Exit(1)
+		} else {
+			logger.Info("Server started on " + server.Addr)
 		}
 	}()
-
-	logger.Info("Server started on " + server.Addr)
 }
 
 func ReloadServer() {
@@ -41,6 +43,5 @@ func ReloadServer() {
 		}
 		logger.Info("Server exited")
 	}
-
 	StartServer()
 }
