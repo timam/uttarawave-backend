@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
 	"github.com/timam/uttarawave-finance-backend/cmd/server"
@@ -26,6 +27,10 @@ func InitializeConfig() error {
 				return err
 			}
 		}
+	}
+
+	if err := checkRequiredEnvs(); err != nil {
+		return err
 	}
 
 	return nil
@@ -76,6 +81,33 @@ func loadIndividualConfig(path string) error {
 			}
 		}
 	})
+
+	return nil
+}
+
+func checkRequiredEnvs() error {
+	requiredEnvs := []string{"ENV"}
+	var missingEnvs []string
+
+	for _, env := range requiredEnvs {
+		if os.Getenv(env) == "" {
+			missingEnvs = append(missingEnvs, env)
+		}
+	}
+
+	if len(missingEnvs) > 0 {
+		err := fmt.Errorf("missing required environment variables: %s", strings.Join(missingEnvs, ", "))
+		logger.Error("Configuration error", zap.Error(err))
+		return err
+	}
+
+	// Validate ENV value
+	env := os.Getenv("ENV")
+	if env != "dev" && env != "prod" {
+		err := fmt.Errorf("invalid ENV value: %s. It must be either 'dev' or 'prod'", env)
+		logger.Error("Configuration error", zap.Error(err))
+		return err
+	}
 
 	return nil
 }
