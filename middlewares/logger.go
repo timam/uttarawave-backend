@@ -22,16 +22,18 @@ func (w responseWriter) Write(b []byte) (int, error) {
 
 func LoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if !viper.GetBool("server.debug") {
-			c.Next()
-			return
-		}
-
 		start := time.Now()
 
 		// Create a custom response writer to capture response body
 		w := &responseWriter{body: &bytes.Buffer{}, ResponseWriter: c.Writer}
 		c.Writer = w
+
+		// Log request details
+		logger.Info("Request received",
+			zap.String("method", c.Request.Method),
+			zap.String("path", c.Request.URL.Path),
+			zap.String("clientIP", c.ClientIP()),
+		)
 
 		// Process request
 		c.Next()
@@ -42,14 +44,24 @@ func LoggerMiddleware() gin.HandlerFunc {
 		// Ensure we capture the status
 		status := c.Writer.Status()
 
-		// Log details of the request and response
-		logger.Info("Request processed",
-			zap.String("method", c.Request.Method),
-			zap.String("path", c.Request.URL.Path),
-			zap.Int("status", status),
-			zap.Duration("duration", duration),
-			zap.String("clientIP", c.ClientIP()),
-			zap.String("response", w.body.String()),
-		)
+		// If debug mode is on, log both request and response details
+		if viper.GetBool("server.debug") {
+			logger.Info("Request processed",
+				zap.String("method", c.Request.Method),
+				zap.String("path", c.Request.URL.Path),
+				zap.Int("status", status),
+				zap.Duration("duration", duration),
+				zap.String("clientIP", c.ClientIP()),
+				zap.String("response", w.body.String()),
+			)
+		} else {
+			// In non-debug mode, just log basic response info
+			logger.Info("Request processed",
+				zap.String("method", c.Request.Method),
+				zap.String("path", c.Request.URL.Path),
+				zap.Int("status", status),
+				zap.Duration("duration", duration),
+			)
+		}
 	}
 }

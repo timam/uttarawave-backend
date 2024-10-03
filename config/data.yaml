@@ -1,4 +1,4 @@
 paths:
   packages:
     internet: data/packages/internet
-    cableTv: data/packages/cableTv
+    cableTV: data/packages/cableTV
