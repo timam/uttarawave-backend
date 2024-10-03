@@ -1,11 +1,11 @@
 package models
 
-type ConnectionType string
+type ConnectionClass string
 
 const (
-	Home      ConnectionType = "home"
-	Business  ConnectionType = "business"
-	Corporate ConnectionType = "corporate"
+	Home      ConnectionClass = "home"
+	Business  ConnectionClass = "business"
+	Corporate ConnectionClass = "corporate"
 )
 
 type BandwidthType string
@@ -16,12 +16,12 @@ const (
 )
 
 type InternetPackage struct {
-	PackageName    string         `csv:"PackageName"`
-	Bandwidth      string         `csv:"Bandwidth"` // e.g., "10Mbps"
-	Price          string         `csv:"Price"`
-	ConnectionType ConnectionType `csv:"ConnectionType"`
-	BandwidthType  BandwidthType  `csv:"BandwidthType"`
-	RealIP         string         `csv:"RealIP"`
+	PackageName     string          `csv:"PackageName"`
+	Bandwidth       string          `csv:"Bandwidth"` // e.g., "10Mbps"
+	Price           string          `csv:"Price"`
+	ConnectionClass ConnectionClass `csv:"ConnectionClass"`
+	BandwidthType   BandwidthType   `csv:"BandwidthType"`
+	RealIP          string          `csv:"RealIP"`
 }
 
 type CableTVPackage struct {
