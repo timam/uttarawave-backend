@@ -6,6 +6,7 @@ import (
 	"github.com/timam/uttarawave-finance-backend/internals/packages"
 	"github.com/timam/uttarawave-finance-backend/pkg/db"
 	"github.com/timam/uttarawave-finance-backend/pkg/logger"
+	"github.com/timam/uttarawave-finance-backend/pkg/metrics"
 	"go.uber.org/zap"
 	"os"
 	"os/signal"
@@ -36,6 +37,12 @@ func init() {
 		logger.Fatal("DynamoDB initialization failed", zap.Error(err))
 	}
 	logger.Info("DynamoDB initialized successfully")
+
+	err = metrics.InitializeMetrics()
+	if err != nil {
+		logger.Fatal("Metrics initialization failed", zap.Error(err))
+	}
+	logger.Info("Metrics initialized successfully")
 }
 
 func main() {

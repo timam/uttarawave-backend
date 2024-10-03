@@ -20,7 +20,7 @@ func (w responseWriter) Write(b []byte) (int, error) {
 	return w.ResponseWriter.Write(b)
 }
 
-func CustomLogger() gin.HandlerFunc {
+func LoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		if !viper.GetBool("server.debug") {
 			c.Next()

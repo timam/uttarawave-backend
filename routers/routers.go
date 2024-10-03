@@ -6,6 +6,7 @@ import (
 	"github.com/timam/uttarawave-finance-backend/handlers"
 	"github.com/timam/uttarawave-finance-backend/middlewares"
 	"github.com/timam/uttarawave-finance-backend/pkg/logger"
+	"github.com/timam/uttarawave-finance-backend/pkg/metrics"
 )
 
 func InitRouter() *gin.Engine {
@@ -21,11 +22,13 @@ func InitRouter() *gin.Engine {
 	router := gin.New()
 	router.Use(gin.Recovery())
 
-	// Always apply the CustomLogger middleware
-	router.Use(middlewares.CustomLogger())
+	// Always apply the middlewares
+	router.Use(middlewares.LoggerMiddleware())
+	router.Use(middlewares.MetricsMiddleware())
 
 	logger.Info("Initializing router")
 
+	router.GET("/metrics", metrics.MetricsHandler())
 	apiV1 := router.Group("/api/v1")
 
 	packageRoutes := apiV1.Group("/packages")
