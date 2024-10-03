@@ -27,14 +27,18 @@ func InitRouter() *gin.Engine {
 	router.Use(middlewares.MetricsMiddleware())
 
 	logger.Info("Initializing router")
-
 	router.GET("/metrics", metrics.MetricsHandler())
-	apiV1 := router.Group("/api/v1")
 
+	apiV1 := router.Group("/api/v1")
 	packageRoutes := apiV1.Group("/packages")
 	{
 		packageRoutes.GET("/internet", handlers.CurrentInternetPackagesHandler)
 		packageRoutes.GET("/cabletv", handlers.CurrentCableTVPackagesHandler)
+	}
+
+	customerRoutes := apiV1.Group("/customers")
+	{
+		customerRoutes.POST("/new", handlers.NewCustomerHandler())
 	}
 
 	logger.Info("Router initialized successfully")
