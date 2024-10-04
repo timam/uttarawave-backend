@@ -11,10 +11,16 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.uber.org/zap"
+	"os"
 	"time"
 )
 
 func InitializeTracing() error {
+	if os.Getenv("ENV") == "dev" {
+		logger.Warn("Tracing will initialized but disabled in dev environment")
+		return nil
+	}
+
 	ctx := context.Background()
 
 	exporter, err := otlptrace.New(
