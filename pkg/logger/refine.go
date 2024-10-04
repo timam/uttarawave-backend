@@ -33,24 +33,23 @@ func SyncLogger() {
 	}
 }
 
-// Convenience functions
-
+// Info Convenience functions
 func Info(msg string, fields ...zap.Field) {
-	getLogger().Info(msg, fields...)
+	globalLogger.Info(msg, fields...)
 }
 
 func Error(msg string, fields ...zap.Field) {
-	getLogger().Error(msg, fields...)
+	globalLogger.Error(msg, fields...)
 }
 
 func Warn(msg string, fields ...zap.Field) {
-	getLogger().Warn(msg, fields...)
+	globalLogger.Warn(msg, fields...)
 }
 
 func Debug(msg string, fields ...zap.Field) {
-	getLogger().Debug(msg, fields...)
+	globalLogger.Debug(msg, fields...)
 }
 
 func Fatal(msg string, fields ...zap.Field) {
-	getLogger().Fatal(msg, fields...)
+	globalLogger.Fatal(msg, fields...)
 }

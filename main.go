@@ -7,6 +7,7 @@ import (
 	"github.com/timam/uttarawave-finance-backend/pkg/db"
 	"github.com/timam/uttarawave-finance-backend/pkg/logger"
 	"github.com/timam/uttarawave-finance-backend/pkg/metrics"
+	"github.com/timam/uttarawave-finance-backend/pkg/tracing"
 	"go.uber.org/zap"
 	"os"
 	"os/signal"
@@ -40,9 +41,15 @@ func init() {
 
 	err = metrics.InitializeMetrics()
 	if err != nil {
-		logger.Fatal("Metrics initialization failed", zap.Error(err))
+		logger.Error("Metrics initialization failed", zap.Error(err))
 	}
 	logger.Info("Metrics initialized successfully")
+
+	err = tracing.InitializeTracing()
+	if err != nil {
+		logger.Error("Tracing initialization failed", zap.Error(err))
+	}
+	logger.Info("Tracing initialized successfully")
 }
 
 func main() {

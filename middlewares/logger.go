@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"bytes"
+	"go.opentelemetry.io/otel/trace"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -24,44 +25,46 @@ func LoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 
-		// Create a custom response writer to capture response body
-		w := &responseWriter{body: &bytes.Buffer{}, ResponseWriter: c.Writer}
-		c.Writer = w
+		// Try to get the trace ID from the context
+		var traceID string
+		if span := trace.SpanFromContext(c.Request.Context()); span != nil {
+			traceID = span.SpanContext().TraceID().String()
+		}
 
-		// Log request details
-		logger.Info("Request received",
+		// Log request
+		logFields := []zap.Field{
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
 			zap.String("clientIP", c.ClientIP()),
-		)
+		}
+		if traceID != "" {
+			logFields = append(logFields, zap.String("traceID", traceID))
+		}
+		logger.Info("Request received", logFields...)
 
-		// Process request
 		c.Next()
 
-		// Calculate resolution time
+		// Log response
 		duration := time.Since(start)
-
-		// Ensure we capture the status
 		status := c.Writer.Status()
 
-		// If debug mode is on, log both request and response details
+		logFields = []zap.Field{
+			zap.String("method", c.Request.Method),
+			zap.String("path", c.Request.URL.Path),
+			zap.Int("status", status),
+			zap.Duration("duration", duration),
+		}
+		if traceID != "" {
+			logFields = append(logFields, zap.String("traceID", traceID))
+		}
+
 		if viper.GetBool("server.debug") {
-			logger.Info("Request processed",
-				zap.String("method", c.Request.Method),
-				zap.String("path", c.Request.URL.Path),
-				zap.Int("status", status),
-				zap.Duration("duration", duration),
+			logFields = append(logFields,
 				zap.String("clientIP", c.ClientIP()),
-				zap.String("response", w.body.String()),
-			)
-		} else {
-			// In non-debug mode, just log basic response info
-			logger.Info("Request processed",
-				zap.String("method", c.Request.Method),
-				zap.String("path", c.Request.URL.Path),
-				zap.Int("status", status),
-				zap.Duration("duration", duration),
+				zap.String("response", c.Writer.(*responseWriter).body.String()),
 			)
 		}
+
+		logger.Info("Request processed", logFields...)
 	}
 }

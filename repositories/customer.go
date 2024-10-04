@@ -49,5 +49,7 @@ func (r *DynamoDBCustomerRepository) CreateCustomer(customer *models.Customer) e
 		return err
 	}
 
+	logger.Info("Customer created")
+
 	return nil
 }

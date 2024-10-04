@@ -9,31 +9,35 @@ import (
 	"syscall"
 )
 
-// InitializeLogger initializes the custom logger
+var globalLogger *zap.Logger
+
 func InitializeLogger() error {
 	var err error
-	once.Do(func() {
-		config := zap.NewProductionConfig()
-		config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	config := zap.NewProductionConfig()
+	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 
-		loggerInstance, err = config.Build()
-		if err != nil {
-			return
-		}
+	globalLogger, err = config.Build()
+	if err != nil {
+		return err
+	}
 
-		// Ensure logger synchronization on exit
-		go handleLoggerSync()
+	// Ensure logger synchronization on exit
+	go handleLoggerSync()
 
-		// Set Gin's default writer to use zap logger
-		gin.DefaultWriter = newZapWriter(loggerInstance, zapcore.InfoLevel)
-		gin.DefaultErrorWriter = newZapWriter(loggerInstance, zapcore.ErrorLevel)
-	})
-	return err
+	// Set Gin's default writer to use zap logger
+	gin.DefaultWriter = newZapWriter(globalLogger, zapcore.InfoLevel)
+	gin.DefaultErrorWriter = newZapWriter(globalLogger, zapcore.ErrorLevel)
+
+	return nil
+}
+
+func GetLogger() *zap.Logger {
+	return globalLogger
 }
 
 func handleLoggerSync() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 	<-sig
-	SyncLogger()
+	_ = globalLogger.Sync()
 }
