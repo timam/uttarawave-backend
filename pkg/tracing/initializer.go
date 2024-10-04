@@ -2,6 +2,7 @@ package tracing
 
 import (
 	"context"
+	"github.com/spf13/viper"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
@@ -30,9 +31,10 @@ func InitializeTracing() error {
 
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String("uttarawave-backend"),
+			semconv.ServiceNameKey.String(viper.GetString("server.name")),
 		),
 	)
+
 	if err != nil {
 		logger.Error("Failed to create resource", zap.Error(err))
 		return err

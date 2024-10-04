@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
@@ -18,7 +19,7 @@ func TracingLoggerMiddleware() gin.HandlerFunc {
 		propagator := otel.GetTextMapPropagator()
 		ctx = propagator.Extract(ctx, propagation.HeaderCarrier(c.Request.Header))
 
-		tracer := otel.Tracer("uttarawave-backend") //TODO: get value from env variable or config
+		tracer := otel.Tracer(viper.GetString("server.name")) //TODO: get value from env variable or config
 		ctx, span := tracer.Start(ctx, c.FullPath())
 		defer span.End()
 

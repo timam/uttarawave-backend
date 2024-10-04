@@ -33,6 +33,9 @@ func InitializeConfig() error {
 		return err
 	}
 
+	// Set server and tracing service names dynamically
+	configureServerAndTracingNames()
+
 	return nil
 }
 
@@ -110,4 +113,22 @@ func checkRequiredEnvs() error {
 	}
 
 	return nil
+}
+
+func configureServerAndTracingNames() {
+	env := os.Getenv("ENV")
+
+	baseName := viper.GetString("server.name")
+	if baseName == "" {
+		baseName = "uttarawave-backend"
+	}
+
+	var serverName string
+	if env == "prod" {
+		serverName = "prod-" + baseName
+	} else {
+		serverName = "dev-" + baseName
+	}
+
+	viper.Set("server.name", serverName)
 }

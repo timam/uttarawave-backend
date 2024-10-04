@@ -1,4 +1,5 @@
 server:
+  name: uttarawave-backend
   debug: false
   port: 8080
 
