@@ -23,8 +23,7 @@ func InitRouter() *gin.Engine {
 	router.Use(gin.Recovery())
 
 	// Always apply the middlewares
-	router.Use(middlewares.TracingMiddleware())
-	router.Use(middlewares.LoggerMiddleware())
+	router.Use(middlewares.TracingLoggerMiddleware())
 	router.Use(middlewares.MetricsMiddleware())
 
 	logger.Info("Initializing router")

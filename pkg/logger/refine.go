@@ -8,48 +8,58 @@ import (
 )
 
 var (
-	loggerInstance *zap.Logger
-	once           sync.Once
+	globalLogger *zap.Logger
+	loggerMutex  sync.RWMutex
 )
 
-func getLogger() *zap.Logger {
-	if loggerInstance == nil {
-		panic("Logger not initialized. Call InitializeLogger() first.")
-	}
-	return loggerInstance
+func GetLogger() *zap.Logger {
+	loggerMutex.RLock()
+	defer loggerMutex.RUnlock()
+	return globalLogger
+}
+
+func SetLogger(l *zap.Logger) {
+	loggerMutex.Lock()
+	defer loggerMutex.Unlock()
+	globalLogger = l
 }
 
 func SyncLogger() {
-	if loggerInstance == nil {
+	logger := GetLogger()
+	if logger == nil {
 		return
 	}
-	err := loggerInstance.Sync()
+	err := logger.Sync()
 	if err != nil {
 		if pathErr, ok := err.(*os.PathError); ok && pathErr.Err == syscall.ENOTTY {
-			loggerInstance.Warn("Failed to sync logger; inappropriate ioctl for device")
+			logger.Warn("Failed to sync logger; inappropriate ioctl for device")
 		} else {
 			_, _ = os.Stderr.WriteString("Failed to sync logger: " + err.Error() + "\n")
 		}
 	}
 }
 
-// Info Convenience functions
+// Convenience functions
 func Info(msg string, fields ...zap.Field) {
-	globalLogger.Info(msg, fields...)
+	GetLogger().Info(msg, fields...)
 }
 
 func Error(msg string, fields ...zap.Field) {
-	globalLogger.Error(msg, fields...)
+	GetLogger().Error(msg, fields...)
 }
 
 func Warn(msg string, fields ...zap.Field) {
-	globalLogger.Warn(msg, fields...)
+	GetLogger().Warn(msg, fields...)
 }
 
 func Debug(msg string, fields ...zap.Field) {
-	globalLogger.Debug(msg, fields...)
+	GetLogger().Debug(msg, fields...)
 }
 
 func Fatal(msg string, fields ...zap.Field) {
-	globalLogger.Fatal(msg, fields...)
+	GetLogger().Fatal(msg, fields...)
+}
+
+func With(fields ...zap.Field) *zap.Logger {
+	return GetLogger().With(fields...)
 }

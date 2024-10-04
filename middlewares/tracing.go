@@ -6,10 +6,12 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
 	"go.uber.org/zap"
+	"time"
 )
 
-func TracingMiddleware() gin.HandlerFunc {
+func TracingLoggerMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		start := time.Now()
 		ctx := c.Request.Context()
 
 		// Extract tracing info from the incoming request
@@ -21,21 +23,40 @@ func TracingMiddleware() gin.HandlerFunc {
 		defer span.End()
 
 		// Add trace ID to the response headers
-		c.Header("X-Trace-ID", span.SpanContext().TraceID().String())
+		traceID := span.SpanContext().TraceID().String()
+		c.Header("X-Trace-ID", traceID)
 
-		// Create a request-scoped logger with trace information
+		// Create a new logger with trace information for this request
 		requestLogger := logger.GetLogger().With(
-			zap.String("traceID", span.SpanContext().TraceID().String()),
+			zap.String("traceID", traceID),
 			zap.String("spanID", span.SpanContext().SpanID().String()),
 		)
 
-		// Store the logger and span in the context
-		c.Set("logger", requestLogger)
-		c.Set("span", span)
+		// Set the request-scoped logger
+		logger.SetLogger(requestLogger)
+
+		// Log the incoming request
+		logger.Info("Request received",
+			zap.String("method", c.Request.Method),
+			zap.String("path", c.Request.URL.Path),
+			zap.String("clientIP", c.ClientIP()),
+		)
 
 		// Use the new context for the rest of the request
 		c.Request = c.Request.WithContext(ctx)
 
 		c.Next()
+
+		// Log the request completion
+		duration := time.Since(start)
+		logger.Info("Request completed",
+			zap.String("method", c.Request.Method),
+			zap.String("path", c.Request.URL.Path),
+			zap.Int("status", c.Writer.Status()),
+			zap.Duration("duration", duration),
+		)
+
+		// Reset the global logger to its original state
+		logger.SetLogger(logger.GetLogger().WithOptions(zap.Fields()))
 	}
 }

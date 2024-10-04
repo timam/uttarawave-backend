@@ -11,6 +11,8 @@ type zapWriter struct {
 	level  zapcore.Level
 }
 
+type zapErrorWriter struct{}
+
 func (zw *zapWriter) Write(p []byte) (n int, err error) {
 	message := string(p)
 	switch zw.level {
@@ -37,4 +39,13 @@ func newZapWriter(logger *zap.Logger, level zapcore.Level) io.Writer {
 		logger: logger,
 		level:  level,
 	}
+}
+
+func (w zapErrorWriter) Write(p []byte) (n int, err error) {
+	Error(string(p))
+	return len(p), nil
+}
+
+func NewZapErrorWriter() io.Writer {
+	return &zapErrorWriter{}
 }

@@ -5,7 +5,6 @@ import (
 	"github.com/timam/uttarawave-finance-backend/models"
 	"github.com/timam/uttarawave-finance-backend/pkg/logger"
 	"github.com/timam/uttarawave-finance-backend/repositories"
-	"go.opentelemetry.io/otel/trace" // Add this line
 	"go.uber.org/zap"
 	"net/http"
 )
@@ -18,13 +17,6 @@ func NewCustomerHandler() gin.HandlerFunc {
 	repo := repositories.NewDynamoDBCustomerRepository()
 
 	return func(c *gin.Context) {
-		span, exists := c.Get("span")
-		if !exists {
-			logger.Error("Span not found in context")
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
-			return
-		}
-
 		var customer models.Customer
 
 		if err := c.ShouldBindJSON(&customer); err != nil {
@@ -49,7 +41,6 @@ func NewCustomerHandler() gin.HandlerFunc {
 
 		logger.Info("Customer created successfully",
 			zap.String("mobile", customer.Mobile),
-			zap.String("traceID", span.(trace.Span).SpanContext().TraceID().String()),
 		)
 
 		c.JSON(http.StatusCreated, gin.H{"message": "Customer created successfully", "customer": customer})
