@@ -1,4 +1,4 @@
-module github.com/timam/uttarawave-finance-backend
+module github.com/timam/uttarawave-backend
 
 go 1.23
 

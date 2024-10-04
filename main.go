@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/timam/uttarawave-finance-backend/cmd/server"
-	"github.com/timam/uttarawave-finance-backend/internals/configs"
-	"github.com/timam/uttarawave-finance-backend/internals/packages"
-	"github.com/timam/uttarawave-finance-backend/pkg/db"
-	"github.com/timam/uttarawave-finance-backend/pkg/logger"
-	"github.com/timam/uttarawave-finance-backend/pkg/metrics"
-	"github.com/timam/uttarawave-finance-backend/pkg/tracing"
+	"github.com/timam/uttarawave-backend/cmd/server"
+	"github.com/timam/uttarawave-backend/internals/configs"
+	"github.com/timam/uttarawave-backend/internals/packages"
+	"github.com/timam/uttarawave-backend/pkg/db"
+	"github.com/timam/uttarawave-backend/pkg/logger"
+	"github.com/timam/uttarawave-backend/pkg/metrics"
+	"github.com/timam/uttarawave-backend/pkg/tracing"
 	"go.uber.org/zap"
 	"os"
 	"os/signal"

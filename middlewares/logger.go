@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
-	"github.com/timam/uttarawave-finance-backend/pkg/logger"
+	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.uber.org/zap"
 )
 

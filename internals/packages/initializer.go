@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/gocarina/gocsv"
 	"github.com/spf13/viper"
-	"github.com/timam/uttarawave-finance-backend/models"
+	"github.com/timam/uttarawave-backend/models"
 	"os"
 	"path/filepath"
 	"strings"

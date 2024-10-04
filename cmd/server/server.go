@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/spf13/viper"
-	"github.com/timam/uttarawave-finance-backend/pkg/logger"
-	"github.com/timam/uttarawave-finance-backend/routers"
+	"github.com/timam/uttarawave-backend/pkg/logger"
+	"github.com/timam/uttarawave-backend/routers"
 	"go.uber.org/zap"
 )
 

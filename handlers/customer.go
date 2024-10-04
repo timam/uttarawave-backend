@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/timam/uttarawave-finance-backend/models"
-	"github.com/timam/uttarawave-finance-backend/pkg/logger"
-	"github.com/timam/uttarawave-finance-backend/repositories"
+	"github.com/timam/uttarawave-backend/models"
+	"github.com/timam/uttarawave-backend/pkg/logger"
+	"github.com/timam/uttarawave-backend/repositories"
 	"go.uber.org/zap"
 	"net/http"
 )

@@ -5,9 +5,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
 	"github.com/spf13/viper"
-	"github.com/timam/uttarawave-finance-backend/models"
-	"github.com/timam/uttarawave-finance-backend/pkg/db"
-	"github.com/timam/uttarawave-finance-backend/pkg/logger"
+	"github.com/timam/uttarawave-backend/models"
+	"github.com/timam/uttarawave-backend/pkg/db"
+	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.uber.org/zap"
 	"os"
 )

@@ -3,10 +3,10 @@ package routers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
-	"github.com/timam/uttarawave-finance-backend/handlers"
-	"github.com/timam/uttarawave-finance-backend/middlewares"
-	"github.com/timam/uttarawave-finance-backend/pkg/logger"
-	"github.com/timam/uttarawave-finance-backend/pkg/metrics"
+	"github.com/timam/uttarawave-backend/handlers"
+	"github.com/timam/uttarawave-backend/middlewares"
+	"github.com/timam/uttarawave-backend/pkg/logger"
+	"github.com/timam/uttarawave-backend/pkg/metrics"
 )
 
 func InitRouter() *gin.Engine {

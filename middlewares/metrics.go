@@ -3,7 +3,7 @@ package middlewares
 import (
 	"bytes"
 	"github.com/gin-gonic/gin"
-	"github.com/timam/uttarawave-finance-backend/pkg/metrics"
+	"github.com/timam/uttarawave-backend/pkg/metrics"
 	"strconv"
 	"time"
 )

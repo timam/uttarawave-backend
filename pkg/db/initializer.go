@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/spf13/viper"
-	"github.com/timam/uttarawave-finance-backend/pkg/logger"
+	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.uber.org/zap"
 )
 

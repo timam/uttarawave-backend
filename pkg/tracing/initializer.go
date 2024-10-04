@@ -2,7 +2,7 @@ package tracing
 
 import (
 	"context"
-	"github.com/timam/uttarawave-finance-backend/pkg/logger"
+	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
@@ -30,7 +30,7 @@ func InitializeTracing() error {
 
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
-			semconv.ServiceNameKey.String("uttarawave-finance-backend"),
+			semconv.ServiceNameKey.String("uttarawave-backend"),
 		),
 	)
 	if err != nil {
