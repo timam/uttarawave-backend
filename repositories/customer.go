@@ -14,6 +14,8 @@ import (
 
 type CustomerRepository interface {
 	CreateCustomer(customer *models.Customer) error
+	GetCustomer(mobile string) (*models.Customer, error)
+	GetAllCustomers() ([]models.Customer, error)
 }
 
 type DynamoDBCustomerRepository struct {
@@ -52,4 +54,55 @@ func (r *DynamoDBCustomerRepository) CreateCustomer(customer *models.Customer) e
 	logger.Info("Customer created")
 
 	return nil
+}
+
+func (r *DynamoDBCustomerRepository) GetCustomer(mobile string) (*models.Customer, error) {
+	input := &dynamodb.GetItemInput{
+		TableName: aws.String(r.tableName),
+		Key: map[string]*dynamodb.AttributeValue{
+			"Mobile": {
+				S: aws.String(mobile),
+			},
+		},
+	}
+
+	result, err := db.DynamoDB.GetItem(input)
+	if err != nil {
+		logger.Error("Failed to get item from DynamoDB", zap.Error(err))
+		return nil, err
+	}
+
+	if result.Item == nil {
+		return nil, nil
+	}
+
+	customer := &models.Customer{}
+	err = dynamodbattribute.UnmarshalMap(result.Item, customer)
+	if err != nil {
+		logger.Error("Failed to unmarshal DynamoDB item", zap.Error(err))
+		return nil, err
+	}
+
+	return customer, nil
+}
+
+func (r *DynamoDBCustomerRepository) GetAllCustomers() ([]models.Customer, error) {
+	input := &dynamodb.ScanInput{
+		TableName: aws.String(r.tableName),
+	}
+
+	result, err := db.DynamoDB.Scan(input)
+	if err != nil {
+		logger.Error("Failed to scan items from DynamoDB", zap.Error(err))
+		return nil, err
+	}
+
+	var customers []models.Customer
+	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &customers)
+	if err != nil {
+		logger.Error("Failed to unmarshal DynamoDB items", zap.Error(err))
+		return nil, err
+	}
+
+	return customers, nil
 }

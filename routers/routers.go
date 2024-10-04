@@ -36,9 +36,10 @@ func InitRouter() *gin.Engine {
 		packageRoutes.GET("/cabletv", handlers.CurrentCableTVPackagesHandler)
 	}
 
-	customerRoutes := apiV1.Group("/customers")
+	customerRoutes := apiV1.Group("/customer")
 	{
-		customerRoutes.POST("/new", handlers.NewCustomerHandler())
+		customerRoutes.POST("/", handlers.NewCustomerHandler())
+		customerRoutes.GET("/", handlers.GetCustomerHandler())
 	}
 
 	logger.Info("Router initialized successfully")
