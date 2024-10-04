@@ -1,9 +1,11 @@
 package tracing
 
 import (
+	"context"
 	"github.com/timam/uttarawave-finance-backend/pkg/logger"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/jaeger"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
@@ -12,36 +14,47 @@ import (
 )
 
 func InitializeTracing() error {
-	var exporter *jaeger.Exporter
-	var err error
-	maxRetries := 5
-	for i := 0; i < maxRetries; i++ {
-		exporter, err = jaeger.New(jaeger.WithCollectorEndpoint(jaeger.WithEndpoint("http://localhost:14268/api/traces")))
-		if err == nil {
-			break
-		}
-		logger.Warn("Failed to create Jaeger exporter, retrying...",
-			zap.Error(err),
-			zap.Int("attempt", i+1),
-			zap.String("endpoint", "http://localhost:14268/api/traces"))
-		time.Sleep(time.Second * 2)
-	}
+	ctx := context.Background()
+
+	exporter, err := otlptrace.New(
+		ctx,
+		otlptracehttp.NewClient(
+			otlptracehttp.WithEndpoint("localhost:4318"),
+			otlptracehttp.WithInsecure(),
+		),
+	)
 	if err != nil {
-		logger.Error("Failed to create Jaeger exporter after multiple attempts",
-			zap.Error(err),
-			zap.String("endpoint", "http://localhost:14268/api/traces"))
-		return nil // Return nil instead of error to continue application startup
+		logger.Error("Failed to create OTLP exporter", zap.Error(err))
+		return err
+	}
+
+	res, err := resource.New(ctx,
+		resource.WithAttributes(
+			semconv.ServiceNameKey.String("uttarawave-finance-backend"),
+		),
+	)
+	if err != nil {
+		logger.Error("Failed to create resource", zap.Error(err))
+		return err
 	}
 
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exporter),
-		sdktrace.WithResource(resource.NewWithAttributes(
-			semconv.SchemaURL,
-			semconv.ServiceNameKey.String("uttarawave-finance-backend"),
-		)),
+		sdktrace.WithResource(res),
 	)
 
 	otel.SetTracerProvider(tp)
 	logger.Info("Tracing initialized successfully")
+
+	// Ensure graceful shutdown
+	go func() {
+		<-ctx.Done()
+		ctxShutdown, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := tp.Shutdown(ctxShutdown); err != nil {
+			logger.Error("Error shutting down tracer provider", zap.Error(err))
+		}
+	}()
+
 	return nil
 }
