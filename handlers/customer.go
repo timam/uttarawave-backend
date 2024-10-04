@@ -47,39 +47,6 @@ func NewCustomerHandler() gin.HandlerFunc {
 	}
 }
 
-//
-//func GetCustomerHandler() gin.HandlerFunc {
-//	repo := repositories.NewDynamoDBCustomerRepository()
-//
-//	return func(c *gin.Context) {
-//		mobile := c.Param("mobile")
-//
-//		if mobile == "" {
-//			logger.Warn("Missing mobile number")
-//			c.JSON(http.StatusBadRequest, gin.H{"error": "Mobile number is required"})
-//			return
-//		}
-//
-//		customer, err := repo.GetCustomer(mobile)
-//		if err != nil {
-//			logger.Error("Failed to get customer data", zap.Error(err))
-//			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customer data"})
-//			return
-//		}
-//
-//		if customer == nil {
-//			c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
-//			return
-//		}
-//
-//		logger.Info("Customer retrieved successfully",
-//			zap.String("mobile", customer.Mobile),
-//		)
-//
-//		c.JSON(http.StatusOK, customer)
-//	}
-//}
-
 func GetCustomerHandler() gin.HandlerFunc {
 	repo := repositories.NewDynamoDBCustomerRepository()
 
