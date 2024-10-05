@@ -8,18 +8,26 @@ import (
 	"time"
 )
 
+const (
+	Silent logger.LogLevel = iota + 1
+)
+
 type GormLogger struct {
 	ZapLogger *zap.Logger
+	LogLevel  logger.LogLevel
 }
 
-func NewGormLogger() logger.Interface {
+func NewGormLogger() *GormLogger {
 	return &GormLogger{
 		ZapLogger: GetLogger(),
+		LogLevel:  logger.Info,
 	}
 }
 
 func (l *GormLogger) LogMode(level logger.LogLevel) logger.Interface {
-	return l
+	newLogger := *l
+	newLogger.LogLevel = level
+	return &newLogger
 }
 
 func (l *GormLogger) Info(ctx context.Context, msg string, data ...interface{}) {
@@ -35,6 +43,9 @@ func (l *GormLogger) Error(ctx context.Context, msg string, data ...interface{})
 }
 
 func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
+	if l.LogLevel <= logger.Silent {
+		return
+	}
 	elapsed := time.Since(begin)
 	sql, rows := fc()
 

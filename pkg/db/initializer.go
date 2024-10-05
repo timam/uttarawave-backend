@@ -24,10 +24,17 @@ func InitializePostgreSQL() error {
 	)
 
 	var err error
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger:      logger.NewGormLogger(),
+	gormConfig := &gorm.Config{
 		QueryFields: true,
-	})
+	}
+
+	if viper.GetBool("server.debug") {
+		gormConfig.Logger = logger.NewGormLogger()
+	} else {
+		gormConfig.Logger = logger.NewGormLogger().LogMode(logger.Silent)
+	}
+
+	DB, err = gorm.Open(postgres.Open(dsn), gormConfig)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %v", err)
 	}
