@@ -1,25 +1,31 @@
 package handlers
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/timam/uttarawave-backend/models"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"github.com/timam/uttarawave-backend/repositories"
 	"go.uber.org/zap"
-	"net/http"
 )
 
-type CustomerHandler struct {
+type customerHandler struct {
 	repo repositories.CustomerRepository
 }
 
-func NewCustomerHandler() *CustomerHandler {
-	return &CustomerHandler{
+func NewCustomerHandler() *customerHandler {
+	return &customerHandler{
 		repo: repositories.NewGormCustomerRepository(),
 	}
 }
 
-func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
+func generateUniqueID() string {
+	return uuid.New().String()
+}
+
+func (h *customerHandler) CreateCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var customer models.Customer
 
@@ -36,7 +42,10 @@ func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 			return
 		}
 
-		err := h.repo.CreateCustomer(&customer)
+		// Generate a unique ID for the customer
+		customer.ID = generateUniqueID()
+
+		err := h.repo.CreateCustomer(c.Request.Context(), &customer)
 		if err != nil {
 			logger.Error("Failed to save customer data", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save customer data"})
@@ -44,6 +53,7 @@ func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 		}
 
 		logger.Info("Customer created successfully",
+			zap.String("id", customer.ID),
 			zap.String("mobile", customer.Mobile),
 		)
 
@@ -51,7 +61,7 @@ func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 	}
 }
 
-func (h *CustomerHandler) GetCustomer() gin.HandlerFunc {
+func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		mobile := c.Query("mobile")
 
@@ -88,7 +98,7 @@ func (h *CustomerHandler) GetCustomer() gin.HandlerFunc {
 	}
 }
 
-func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
+func (h *customerHandler) UpdateCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var customer models.Customer
 
@@ -106,6 +116,7 @@ func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
 		}
 
 		logger.Info("Customer updated successfully",
+			zap.String("id", customer.ID),
 			zap.String("mobile", customer.Mobile),
 		)
 
@@ -113,7 +124,7 @@ func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
 	}
 }
 
-func (h *CustomerHandler) DeleteCustomer() gin.HandlerFunc {
+func (h *customerHandler) DeleteCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 

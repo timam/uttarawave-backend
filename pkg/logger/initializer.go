@@ -2,6 +2,7 @@ package logger
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"log"
@@ -12,9 +13,19 @@ import (
 
 func InitializeLogger() error {
 	config := zap.NewProductionConfig()
+	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
+	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
+	config.OutputPaths = []string{"stdout"}
 
-	logger, err := config.Build()
+	if viper.GetBool("server.debug") {
+		config.Level = zap.NewAtomicLevelAt(zap.DebugLevel)
+		config.Development = true
+	} else {
+		config.DisableStacktrace = true
+	}
+
+	logger, err := config.Build(zap.AddCallerSkip(1))
 	if err != nil {
 		return err
 	}
@@ -33,6 +44,7 @@ func InitializeLogger() error {
 
 	return nil
 }
+
 func handleLoggerSync() {
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)

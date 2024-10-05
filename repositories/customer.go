@@ -1,27 +1,27 @@
 package repositories
 
 import (
+	"context"
 	"github.com/timam/uttarawave-backend/models"
 	"github.com/timam/uttarawave-backend/pkg/db"
 )
 
 type CustomerRepository interface {
-	CreateCustomer(customer *models.Customer) error
+	CreateCustomer(ctx context.Context, customer *models.Customer) error
 	GetCustomer(id string) (*models.Customer, error)
 	GetCustomerByMobile(mobile string) (*models.Customer, error)
 	GetAllCustomers() ([]models.Customer, error)
 	UpdateCustomer(customer *models.Customer) error
 	DeleteCustomer(id string) error
 }
-
 type GormCustomerRepository struct{}
 
 func NewGormCustomerRepository() *GormCustomerRepository {
 	return &GormCustomerRepository{}
 }
 
-func (r *GormCustomerRepository) CreateCustomer(customer *models.Customer) error {
-	return db.DB.Create(customer).Error
+func (r *GormCustomerRepository) CreateCustomer(ctx context.Context, customer *models.Customer) error {
+	return db.DB.WithContext(ctx).Create(customer).Error
 }
 
 func (r *GormCustomerRepository) GetCustomer(id string) (*models.Customer, error) {
