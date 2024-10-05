@@ -13,9 +13,13 @@ type CustomerHandler struct {
 	repo repositories.CustomerRepository
 }
 
-func NewCustomerHandler() gin.HandlerFunc {
-	repo := repositories.NewDynamoDBCustomerRepository()
+func NewCustomerHandler() *CustomerHandler {
+	return &CustomerHandler{
+		repo: repositories.NewGormCustomerRepository(),
+	}
+}
 
+func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var customer models.Customer
 
@@ -32,7 +36,7 @@ func NewCustomerHandler() gin.HandlerFunc {
 			return
 		}
 
-		err := repo.CreateCustomer(&customer)
+		err := h.repo.CreateCustomer(&customer)
 		if err != nil {
 			logger.Error("Failed to save customer data", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save customer data"})
@@ -47,34 +51,13 @@ func NewCustomerHandler() gin.HandlerFunc {
 	}
 }
 
-func GetCustomerHandler() gin.HandlerFunc {
-	repo := repositories.NewDynamoDBCustomerRepository()
-
+func (h *CustomerHandler) GetCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var requestBody struct {
-			Mobile string `json:"mobile"`
-		}
+		mobile := c.Query("mobile")
 
-		if err := c.ShouldBindJSON(&requestBody); err != nil {
-			if err.Error() == "EOF" {
-				// No body provided, return all customers
-				customers, err := repo.GetAllCustomers()
-				if err != nil {
-					logger.Error("Failed to get all customers", zap.Error(err))
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customers"})
-					return
-				}
-				c.JSON(http.StatusOK, customers)
-				return
-			}
-			logger.Error("Failed to bind JSON", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		if requestBody.Mobile == "" {
-			// Empty mobile number, return all customers
-			customers, err := repo.GetAllCustomers()
+		if mobile == "" {
+			// No mobile number provided, return all customers
+			customers, err := h.repo.GetAllCustomers()
 			if err != nil {
 				logger.Error("Failed to get all customers", zap.Error(err))
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customers"})
@@ -85,7 +68,7 @@ func GetCustomerHandler() gin.HandlerFunc {
 		}
 
 		// Mobile number provided, return specific customer
-		customer, err := repo.GetCustomer(requestBody.Mobile)
+		customer, err := h.repo.GetCustomerByMobile(mobile)
 		if err != nil {
 			logger.Error("Failed to get customer data", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customer data"})
@@ -102,5 +85,49 @@ func GetCustomerHandler() gin.HandlerFunc {
 		)
 
 		c.JSON(http.StatusOK, customer)
+	}
+}
+
+func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var customer models.Customer
+
+		if err := c.ShouldBindJSON(&customer); err != nil {
+			logger.Error("Failed to bind JSON", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		err := h.repo.UpdateCustomer(&customer)
+		if err != nil {
+			logger.Error("Failed to update customer data", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer data"})
+			return
+		}
+
+		logger.Info("Customer updated successfully",
+			zap.String("mobile", customer.Mobile),
+		)
+
+		c.JSON(http.StatusOK, gin.H{"message": "Customer updated successfully", "customer": customer})
+	}
+}
+
+func (h *CustomerHandler) DeleteCustomer() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		err := h.repo.DeleteCustomer(id)
+		if err != nil {
+			logger.Error("Failed to delete customer", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete customer"})
+			return
+		}
+
+		logger.Info("Customer deleted successfully",
+			zap.String("id", id),
+		)
+
+		c.JSON(http.StatusOK, gin.H{"message": "Customer deleted successfully"})
 	}
 }

@@ -1,46 +1,42 @@
+// pkg/db/initializer.go
+
 package db
 
 import (
 	"fmt"
-	"os"
-
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/spf13/viper"
+	"github.com/timam/uttarawave-backend/models"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.uber.org/zap"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-var DynamoDB *dynamodb.DynamoDB
+var DB *gorm.DB
 
-func InitializeDynamoDB() error {
-	region := viper.GetString("database.dynamodb.region")
-	isDev := os.Getenv("IS_DEV") == "true"
+func InitializePostgreSQL() error {
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Dhaka",
+		viper.GetString("database.postgres.host"),
+		viper.GetString("database.postgres.user"),
+		viper.GetString("database.postgres.password"),
+		viper.GetString("database.postgres.dbname"),
+		viper.GetString("database.postgres.port"),
+	)
 
-	var creds *credentials.Credentials
-	if isDev {
-		creds = credentials.NewStaticCredentials(
-			os.Getenv("AWS_ACCESS_KEY_ID"),
-			os.Getenv("AWS_SECRET_ACCESS_KEY"),
-			os.Getenv("AWS_SESSION_TOKEN"),
-		)
-	} else {
-		creds = credentials.NewEnvCredentials()
-	}
-
-	sess, err := session.NewSession(&aws.Config{
-		Region:      aws.String(region),
-		Credentials: creds,
-	})
-
+	var err error
+	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		logger.Error("Failed to create session", zap.Error(err))
-		return fmt.Errorf("failed to create session: %v", err)
+		logger.Error("Failed to connect to database", zap.Error(err))
+		return fmt.Errorf("failed to connect to database: %v", err)
 	}
 
-	DynamoDB = dynamodb.New(sess)
+	// Auto Migrate the schema
+	err = DB.AutoMigrate(&models.Building{}, &models.Device{}, &models.Customer{})
+	if err != nil {
+		logger.Error("Failed to auto migrate schema", zap.Error(err))
+		return fmt.Errorf("failed to auto migrate schema: %v", err)
+	}
 
+	logger.Info("Successfully connected to PostgreSQL Server")
 	return nil
 }

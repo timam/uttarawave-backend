@@ -33,11 +33,10 @@ func init() {
 	}
 	logger.Info("Package initialized successfully")
 
-	err = db.InitializeDynamoDB()
-	if err != nil {
-		logger.Fatal("DynamoDB initialization failed", zap.Error(err))
+	if err := db.InitializePostgreSQL(); err != nil {
+		logger.Fatal("Failed to initialize PostgreSQL", zap.Error(err))
 	}
-	logger.Info("DynamoDB initialized successfully")
+	logger.Info("PostgreSQL initialized successfully")
 
 	err = metrics.InitializeMetrics()
 	if err != nil {

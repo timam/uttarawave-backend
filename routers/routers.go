@@ -10,7 +10,6 @@ import (
 )
 
 func InitRouter() *gin.Engine {
-
 	if viper.GetBool("server.debug") {
 		gin.SetMode(gin.DebugMode)
 		logger.Info("Debug mode enabled, setting Gin to DebugMode")
@@ -36,10 +35,13 @@ func InitRouter() *gin.Engine {
 		packageRoutes.GET("/cabletv", handlers.CurrentCableTVPackagesHandler)
 	}
 
-	customerRoutes := apiV1.Group("/customer")
+	customerHandler := handlers.NewCustomerHandler()
+	customerRoutes := apiV1.Group("/customers")
 	{
-		customerRoutes.POST("/", handlers.NewCustomerHandler())
-		customerRoutes.GET("/", handlers.GetCustomerHandler())
+		customerRoutes.POST("/", customerHandler.CreateCustomer())
+		customerRoutes.GET("/", customerHandler.GetCustomer())
+		customerRoutes.PUT("/", customerHandler.UpdateCustomer())
+		customerRoutes.DELETE("/:id", customerHandler.DeleteCustomer())
 	}
 
 	logger.Info("Router initialized successfully")

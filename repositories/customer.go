@@ -1,108 +1,51 @@
 package repositories
 
 import (
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
-	"github.com/spf13/viper"
 	"github.com/timam/uttarawave-backend/models"
 	"github.com/timam/uttarawave-backend/pkg/db"
-	"github.com/timam/uttarawave-backend/pkg/logger"
-	"go.uber.org/zap"
-	"os"
 )
 
 type CustomerRepository interface {
 	CreateCustomer(customer *models.Customer) error
-	GetCustomer(mobile string) (*models.Customer, error)
+	GetCustomer(id string) (*models.Customer, error)
+	GetCustomerByMobile(mobile string) (*models.Customer, error)
 	GetAllCustomers() ([]models.Customer, error)
+	UpdateCustomer(customer *models.Customer) error
+	DeleteCustomer(id string) error
 }
 
-type DynamoDBCustomerRepository struct {
-	tableName string
+type GormCustomerRepository struct{}
+
+func NewGormCustomerRepository() *GormCustomerRepository {
+	return &GormCustomerRepository{}
 }
 
-func NewDynamoDBCustomerRepository() *DynamoDBCustomerRepository {
-	tableName := viper.GetString("database.dynamodb.tables.customer")
-	env := os.Getenv("ENV")
-	if env == "dev" {
-		tableName = "dev-" + tableName
-	} else if env == "prod" {
-		tableName = "prod-" + tableName
-	}
-	return &DynamoDBCustomerRepository{tableName: tableName}
+func (r *GormCustomerRepository) CreateCustomer(customer *models.Customer) error {
+	return db.DB.Create(customer).Error
 }
 
-func (r *DynamoDBCustomerRepository) CreateCustomer(customer *models.Customer) error {
-	av, err := dynamodbattribute.MarshalMap(customer)
-	if err != nil {
-		logger.Error("Failed to marshal customer", zap.Error(err))
-		return err
-	}
-
-	input := &dynamodb.PutItemInput{
-		Item:      av,
-		TableName: aws.String(r.tableName),
-	}
-
-	_, err = db.DynamoDB.PutItem(input)
-	if err != nil {
-		logger.Error("Failed to put item in DynamoDB", zap.Error(err))
-		return err
-	}
-
-	logger.Info("Customer created")
-
-	return nil
+func (r *GormCustomerRepository) GetCustomer(id string) (*models.Customer, error) {
+	var customer models.Customer
+	err := db.DB.First(&customer, "id = ?", id).Error
+	return &customer, err
 }
 
-func (r *DynamoDBCustomerRepository) GetCustomer(mobile string) (*models.Customer, error) {
-	input := &dynamodb.GetItemInput{
-		TableName: aws.String(r.tableName),
-		Key: map[string]*dynamodb.AttributeValue{
-			"Mobile": {
-				S: aws.String(mobile),
-			},
-		},
-	}
-
-	result, err := db.DynamoDB.GetItem(input)
-	if err != nil {
-		logger.Error("Failed to get item from DynamoDB", zap.Error(err))
-		return nil, err
-	}
-
-	if result.Item == nil {
-		return nil, nil
-	}
-
-	customer := &models.Customer{}
-	err = dynamodbattribute.UnmarshalMap(result.Item, customer)
-	if err != nil {
-		logger.Error("Failed to unmarshal DynamoDB item", zap.Error(err))
-		return nil, err
-	}
-
-	return customer, nil
+func (r *GormCustomerRepository) GetCustomerByMobile(mobile string) (*models.Customer, error) {
+	var customer models.Customer
+	err := db.DB.First(&customer, "mobile = ?", mobile).Error
+	return &customer, err
 }
 
-func (r *DynamoDBCustomerRepository) GetAllCustomers() ([]models.Customer, error) {
-	input := &dynamodb.ScanInput{
-		TableName: aws.String(r.tableName),
-	}
-
-	result, err := db.DynamoDB.Scan(input)
-	if err != nil {
-		logger.Error("Failed to scan items from DynamoDB", zap.Error(err))
-		return nil, err
-	}
-
+func (r *GormCustomerRepository) GetAllCustomers() ([]models.Customer, error) {
 	var customers []models.Customer
-	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &customers)
-	if err != nil {
-		logger.Error("Failed to unmarshal DynamoDB items", zap.Error(err))
-		return nil, err
-	}
+	err := db.DB.Find(&customers).Error
+	return customers, err
+}
 
-	return customers, nil
+func (r *GormCustomerRepository) UpdateCustomer(customer *models.Customer) error {
+	return db.DB.Save(customer).Error
+}
+
+func (r *GormCustomerRepository) DeleteCustomer(id string) error {
+	return db.DB.Delete(&models.Customer{}, "id = ?", id).Error
 }
