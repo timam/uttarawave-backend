@@ -19,7 +19,7 @@ func TracingLoggerMiddleware() gin.HandlerFunc {
 		propagator := otel.GetTextMapPropagator()
 		ctx = propagator.Extract(ctx, propagation.HeaderCarrier(c.Request.Header))
 
-		tracer := otel.Tracer(viper.GetString("server.name")) //TODO: get value from env variable or config
+		tracer := otel.Tracer(viper.GetString("server.name"))
 		ctx, span := tracer.Start(ctx, c.FullPath())
 		defer span.End()
 
@@ -32,6 +32,9 @@ func TracingLoggerMiddleware() gin.HandlerFunc {
 			zap.String("traceID", traceID),
 			zap.String("spanID", span.SpanContext().SpanID().String()),
 		)
+
+		// Use a defer function to reset the logger after the request is completed
+		defer logger.SetLogger(logger.GetLogger())
 
 		// Set the request-scoped logger
 		logger.SetLogger(requestLogger)
@@ -56,8 +59,5 @@ func TracingLoggerMiddleware() gin.HandlerFunc {
 			zap.Int("status", c.Writer.Status()),
 			zap.Duration("duration", duration),
 		)
-
-		// Reset the global logger to its original state
-		logger.SetLogger(logger.GetLogger().WithOptions(zap.Fields()))
 	}
 }

@@ -8,6 +8,16 @@ import (
 	"time"
 )
 
+type responseWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w responseWriter) Write(b []byte) (int, error) {
+	w.body.Write(b)
+	return w.ResponseWriter.Write(b)
+}
+
 func MetricsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
