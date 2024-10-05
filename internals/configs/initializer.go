@@ -33,6 +33,15 @@ func InitializeConfig() error {
 		return err
 	}
 
+	if viper.GetString("server.debug") == "true" {
+		logger.Info("Debug mode enabled, logger will be reinitializing ")
+		err := logger.InitializeLogger()
+		if err != nil {
+			return err
+		}
+		logger.Info("Logger reinitialized successfully")
+	}
+
 	// Set server and tracing service names dynamically
 	configureServerAndTracingNames()
 
