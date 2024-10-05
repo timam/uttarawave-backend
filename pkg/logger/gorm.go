@@ -1,3 +1,5 @@
+// TODO: if we enable debug mode, gorm log should be printed with hot reload
+
 package logger
 
 import (

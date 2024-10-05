@@ -1,4 +1,4 @@
-// pkg/db/initializer.go
+// TODO: if we enable debug mode, gorm log should be printed with hot reload
 
 package db
 
