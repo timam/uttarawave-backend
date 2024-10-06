@@ -84,16 +84,13 @@ func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customer data"})
 			return
 		}
-
-		if customer == nil {
+		if customer.ID == "" {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
 			return
 		}
 
 		logger.Info("Customer retrieved successfully",
-			zap.String("mobile", customer.Mobile),
-		)
-
+			zap.String("mobile", customer.Mobile))
 		c.JSON(http.StatusOK, customer)
 	}
 }
