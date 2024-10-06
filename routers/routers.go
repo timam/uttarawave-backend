@@ -39,6 +39,8 @@ func InitRouter() *gin.Engine {
 	{
 		buildingHandler := handlers.NewBuildingHandler()
 		buildingRoutes.POST("", buildingHandler.AddBuilding())
+		buildingRoutes.GET("", buildingHandler.GetAllBuildings())
+		buildingRoutes.GET("/:id", buildingHandler.GetBuilding())
 		buildingRoutes.PATCH("/:id", buildingHandler.UpdateBuilding())
 		buildingRoutes.DELETE("/:id", buildingHandler.DeleteBuilding())
 	}

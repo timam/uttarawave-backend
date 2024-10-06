@@ -21,6 +21,7 @@ func NewBuildingHandler() *buildingHandler {
 }
 
 func (h *buildingHandler) AddBuilding() gin.HandlerFunc {
+	//TODO: Prevent duplicate building creation
 	return func(c *gin.Context) {
 		var building models.Building
 
@@ -103,5 +104,42 @@ func (h *buildingHandler) UpdateBuilding() gin.HandlerFunc {
 
 		logger.Info("Building updated successfully", zap.String("id", id))
 		c.JSON(http.StatusOK, gin.H{"message": "Building updated successfully"})
+	}
+}
+
+func (h *buildingHandler) GetBuilding() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		if id == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Building ID must be provided"})
+			return
+		}
+
+		building, err := h.repo.GetBuildingByID(c.Request.Context(), id)
+		if err != nil {
+			logger.Error("Failed to get building", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get building"})
+			return
+		}
+
+		if building == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Building not found"})
+			return
+		}
+
+		c.JSON(http.StatusOK, building)
+	}
+}
+
+func (h *buildingHandler) GetAllBuildings() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		buildings, err := h.repo.GetAllBuildings(c.Request.Context())
+		if err != nil {
+			logger.Error("Failed to get all buildings", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get buildings"})
+			return
+		}
+
+		c.JSON(http.StatusOK, buildings)
 	}
 }
