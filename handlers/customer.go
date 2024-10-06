@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -25,7 +26,6 @@ func NewCustomerHandler() *customerHandler {
 func generateUniqueID() string {
 	return uuid.New().String()
 }
-
 func (h *customerHandler) CreateCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var customer models.Customer
@@ -41,6 +41,27 @@ func (h *customerHandler) CreateCustomer() gin.HandlerFunc {
 			logger.Warn("Missing required fields")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Mobile and Name are required fields"})
 			return
+		}
+
+		// Check if BuildingID is provided
+		if customer.BuildingID != "" {
+			// Customer is from an existing building
+			if customer.Flat == "" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Flat is required when BuildingID is provided"})
+				return
+			}
+			// Clear individual address fields
+			customer.House = ""
+			customer.Road = ""
+			customer.Block = ""
+			customer.Area = ""
+		} else {
+			// Customer is not from an existing building
+			// Validate address fields
+			if customer.House == "" || customer.Road == "" || customer.Block == "" || customer.Area == "" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "All address fields (House, Road, Block, Area) are required when BuildingID is not provided"})
+				return
+			}
 		}
 
 		// Generate a unique ID for the customer
@@ -61,7 +82,6 @@ func (h *customerHandler) CreateCustomer() gin.HandlerFunc {
 		c.JSON(http.StatusCreated, gin.H{"message": "Customer created successfully", "customer": customer})
 	}
 }
-
 func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		mobile := c.Query("mobile")
@@ -74,7 +94,28 @@ func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customers"})
 				return
 			}
-			c.JSON(http.StatusOK, customers)
+
+			// Process each customer to include address information
+			var processedCustomers []gin.H
+			for _, customer := range customers {
+				customerData := gin.H{
+					"id":     customer.ID,
+					"mobile": customer.Mobile,
+					"name":   customer.Name,
+				}
+
+				if customer.BuildingID != "" {
+					customerData["buildingId"] = customer.BuildingID
+					customerData["flat"] = customer.Flat
+				} else {
+					address := fmt.Sprintf("%s, %s, %s, %s", customer.House, customer.Road, customer.Block, customer.Area)
+					customerData["address"] = address
+				}
+
+				processedCustomers = append(processedCustomers, customerData)
+			}
+
+			c.JSON(http.StatusOK, processedCustomers)
 			return
 		}
 
@@ -90,9 +131,23 @@ func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 			return
 		}
 
+		customerData := gin.H{
+			"id":     customer.ID,
+			"mobile": customer.Mobile,
+			"name":   customer.Name,
+		}
+
+		if customer.BuildingID != "" {
+			customerData["buildingId"] = customer.BuildingID
+			customerData["flat"] = customer.Flat
+		} else {
+			address := fmt.Sprintf("%s, %s, %s, %s", customer.House, customer.Road, customer.Block, customer.Area)
+			customerData["address"] = address
+		}
+
 		logger.Info("Customer retrieved successfully",
 			zap.String("mobile", customer.Mobile))
-		c.JSON(http.StatusOK, customer)
+		c.JSON(http.StatusOK, customerData)
 	}
 }
 

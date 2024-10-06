@@ -35,6 +35,14 @@ func InitRouter() *gin.Engine {
 		packageRoutes.GET("/cabletv", handlers.CurrentCableTVPackagesHandler)
 	}
 
+	buildingRoutes := apiV1.Group("/buildings")
+	{
+		buildingHandler := handlers.NewBuildingHandler()
+		buildingRoutes.POST("", buildingHandler.AddBuilding())
+		buildingRoutes.PATCH("/:id", buildingHandler.UpdateBuilding())
+		buildingRoutes.DELETE("/:id", buildingHandler.DeleteBuilding())
+	}
+
 	customerHandler := handlers.NewCustomerHandler()
 	customerRoutes := apiV1.Group("/customers")
 	{
