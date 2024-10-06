@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -97,15 +98,57 @@ func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 
 func (h *customerHandler) UpdateCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var customer models.Customer
+		var updateData map[string]interface{}
 
-		if err := c.ShouldBindJSON(&customer); err != nil {
+		if err := c.ShouldBindJSON(&updateData); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		err := h.repo.UpdateCustomer(&customer)
+		mobile, ok := updateData["mobile"].(string)
+		if !ok || mobile == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Mobile number must be provided"})
+			return
+		}
+
+		// Retrieve the existing customer by mobile number.
+		existingCustomer, err := h.repo.GetCustomerByMobile(mobile)
+		if err != nil {
+			logger.Error("Failed to find customer by mobile", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find customer by mobile"})
+			return
+		}
+		if existingCustomer == nil || existingCustomer.ID == "" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
+			return
+		}
+
+		// Update fields based on provided data.
+		if name, ok := updateData["name"].(string); ok {
+			existingCustomer.Name = name
+		}
+		if buildingId, ok := updateData["buildingId"].(string); ok {
+			existingCustomer.BuildingID = buildingId
+		}
+		if flat, ok := updateData["flat"].(string); ok {
+			existingCustomer.Flat = flat
+		}
+		if house, ok := updateData["house"].(string); ok {
+			existingCustomer.House = house
+		}
+		if road, ok := updateData["road"].(string); ok {
+			existingCustomer.Road = road
+		}
+		if block, ok := updateData["block"].(string); ok {
+			existingCustomer.Block = block
+		}
+		if area, ok := updateData["area"].(string); ok {
+			existingCustomer.Area = area
+		}
+		existingCustomer.UpdatedAt = time.Now() // Ensure updated timestamp is set
+
+		err = h.repo.UpdateCustomer(existingCustomer)
 		if err != nil {
 			logger.Error("Failed to update customer data", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update customer data"})
@@ -113,14 +156,13 @@ func (h *customerHandler) UpdateCustomer() gin.HandlerFunc {
 		}
 
 		logger.Info("Customer updated successfully",
-			zap.String("id", customer.ID),
-			zap.String("mobile", customer.Mobile),
+			zap.String("id", existingCustomer.ID),
+			zap.String("mobile", existingCustomer.Mobile),
 		)
 
-		c.JSON(http.StatusOK, gin.H{"message": "Customer updated successfully", "customer": customer})
+		c.JSON(http.StatusOK, gin.H{"message": "Customer updated successfully", "customer": existingCustomer})
 	}
 }
-
 func (h *customerHandler) DeleteCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		mobile := c.Query("mobile")
