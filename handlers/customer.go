@@ -14,12 +14,14 @@ import (
 )
 
 type customerHandler struct {
-	repo repositories.CustomerRepository
+	repo         repositories.CustomerRepository
+	buildingRepo repositories.BuildingRepository
 }
 
-func NewCustomerHandler() *customerHandler {
+func NewCustomerHandler(cr repositories.CustomerRepository, br repositories.BuildingRepository) *customerHandler {
 	return &customerHandler{
-		repo: repositories.NewGormCustomerRepository(),
+		repo:         cr,
+		buildingRepo: br,
 	}
 }
 
@@ -82,6 +84,7 @@ func (h *customerHandler) CreateCustomer() gin.HandlerFunc {
 		c.JSON(http.StatusCreated, gin.H{"message": "Customer created successfully", "customer": customer})
 	}
 }
+
 func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		mobile := c.Query("mobile")
@@ -105,8 +108,13 @@ func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 				}
 
 				if customer.BuildingID != "" {
-					customerData["buildingId"] = customer.BuildingID
-					customerData["flat"] = customer.Flat
+					building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), customer.BuildingID)
+					if err != nil {
+						logger.Error("Failed to get building data", zap.Error(err))
+						continue
+					}
+					address := fmt.Sprintf("%s, %s, %s, %s, %s", customer.Flat, building.House, building.Road, building.Block, building.Area)
+					customerData["address"] = address
 				} else {
 					address := fmt.Sprintf("%s, %s, %s, %s", customer.House, customer.Road, customer.Block, customer.Area)
 					customerData["address"] = address
@@ -138,15 +146,20 @@ func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 		}
 
 		if customer.BuildingID != "" {
-			customerData["buildingId"] = customer.BuildingID
-			customerData["flat"] = customer.Flat
+			building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), customer.BuildingID)
+			if err != nil {
+				logger.Error("Failed to get building data", zap.Error(err))
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get building data"})
+				return
+			}
+			address := fmt.Sprintf("%s, %s, %s, %s, %s", customer.Flat, building.House, building.Road, building.Block, building.Area)
+			customerData["address"] = address
 		} else {
 			address := fmt.Sprintf("%s, %s, %s, %s", customer.House, customer.Road, customer.Block, customer.Area)
 			customerData["address"] = address
 		}
 
-		logger.Info("Customer retrieved successfully",
-			zap.String("mobile", customer.Mobile))
+		logger.Info("Customer retrieved successfully", zap.String("mobile", customer.Mobile))
 		c.JSON(http.StatusOK, customerData)
 	}
 }

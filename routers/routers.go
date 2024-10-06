@@ -7,6 +7,7 @@ import (
 	"github.com/timam/uttarawave-backend/middlewares"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"github.com/timam/uttarawave-backend/pkg/metrics"
+	"github.com/timam/uttarawave-backend/repositories"
 )
 
 func InitRouter() *gin.Engine {
@@ -45,7 +46,9 @@ func InitRouter() *gin.Engine {
 		buildingRoutes.DELETE("/:id", buildingHandler.DeleteBuilding())
 	}
 
-	customerHandler := handlers.NewCustomerHandler()
+	customerRepo := repositories.NewGormCustomerRepository()
+	buildingRepo := repositories.NewGormBuildingRepository()
+	customerHandler := handlers.NewCustomerHandler(customerRepo, buildingRepo)
 	customerRoutes := apiV1.Group("/customers")
 	{
 		customerRoutes.POST("/", customerHandler.CreateCustomer())
