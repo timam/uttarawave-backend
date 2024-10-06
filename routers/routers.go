@@ -41,7 +41,7 @@ func InitRouter() *gin.Engine {
 		customerRoutes.POST("/", customerHandler.CreateCustomer())
 		customerRoutes.GET("/", customerHandler.GetCustomer())
 		customerRoutes.PUT("/", customerHandler.UpdateCustomer())
-		customerRoutes.DELETE("/:id", customerHandler.DeleteCustomer())
+		customerRoutes.DELETE("/", customerHandler.DeleteCustomer())
 	}
 
 	logger.Info("Router initialized successfully")

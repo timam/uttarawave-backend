@@ -123,18 +123,29 @@ func (h *customerHandler) UpdateCustomer() gin.HandlerFunc {
 
 func (h *customerHandler) DeleteCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.Param("id")
+		mobile := c.Query("mobile")
 
-		err := h.repo.DeleteCustomer(id)
-		if err != nil {
-			logger.Error("Failed to delete customer", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete customer"})
+		if mobile == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Mobile number must be provided"})
 			return
 		}
 
-		logger.Info("Customer deleted successfully",
-			zap.String("id", id),
-		)
+		customer, err := h.repo.GetCustomerByMobile(mobile)
+		if err != nil {
+			logger.Error("Failed to find customer by mobile", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find customer by mobile"})
+			return
+		}
+		if customer.ID == "" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
+			return
+		}
+
+		if err := h.repo.DeleteCustomer(customer.ID); err != nil {
+			logger.Error("Failed to delete customer by mobile", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete customer"})
+			return
+		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "Customer deleted successfully"})
 	}
