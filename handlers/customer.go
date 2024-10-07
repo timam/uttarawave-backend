@@ -90,51 +90,17 @@ func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 		mobile := c.Query("mobile")
 
 		if mobile == "" {
-			// No mobile number provided, return all customers
-			customers, err := h.repo.GetAllCustomers()
-			if err != nil {
-				logger.Error("Failed to get all customers", zap.Error(err))
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customers"})
-				return
-			}
-
-			// Process each customer to include address information
-			var processedCustomers []gin.H
-			for _, customer := range customers {
-				customerData := gin.H{
-					"id":     customer.ID,
-					"mobile": customer.Mobile,
-					"name":   customer.Name,
-				}
-
-				if customer.BuildingID != "" {
-					building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), customer.BuildingID)
-					if err != nil {
-						logger.Error("Failed to get building data", zap.Error(err))
-						continue
-					}
-					address := fmt.Sprintf("%s, %s, %s, %s, %s", customer.Flat, building.House, building.Road, building.Block, building.Area)
-					customerData["address"] = address
-				} else {
-					address := fmt.Sprintf("%s, %s, %s, %s", customer.House, customer.Road, customer.Block, customer.Area)
-					customerData["address"] = address
-				}
-
-				processedCustomers = append(processedCustomers, customerData)
-			}
-
-			c.JSON(http.StatusOK, processedCustomers)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Mobile number must be provided"})
 			return
 		}
 
-		// Mobile number provided, return specific customer
 		customer, err := h.repo.GetCustomerByMobile(mobile)
 		if err != nil {
 			logger.Error("Failed to get customer data", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customer data"})
 			return
 		}
-		if customer.ID == "" {
+		if customer == nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
 			return
 		}
@@ -164,35 +130,84 @@ func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 	}
 }
 
+func (h *customerHandler) GetAllCustomers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		customers, err := h.repo.GetAllCustomers()
+		if err != nil {
+			logger.Error("Failed to get all customers", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customers"})
+			return
+		}
+
+		var processedCustomers []gin.H
+		for _, customer := range customers {
+			customerData := gin.H{
+				"id":     customer.ID,
+				"mobile": customer.Mobile,
+				"name":   customer.Name,
+			}
+
+			if customer.BuildingID != "" {
+				building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), customer.BuildingID)
+				if err != nil {
+					logger.Error("Failed to get building data", zap.Error(err))
+					continue
+				}
+				address := fmt.Sprintf("%s, %s, %s, %s, %s", customer.Flat, building.House, building.Road, building.Block, building.Area)
+				customerData["address"] = address
+			} else {
+				address := fmt.Sprintf("%s, %s, %s, %s, %s", customer.Flat, customer.House, customer.Road, customer.Block, customer.Area)
+				customerData["address"] = address
+			}
+
+			processedCustomers = append(processedCustomers, customerData)
+		}
+
+		logger.Info("Retrieved all customers", zap.Int("count", len(processedCustomers)))
+		c.JSON(http.StatusOK, processedCustomers)
+	}
+}
+
 func (h *customerHandler) UpdateCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var updateData map[string]interface{}
+		id := c.Param("id")
+		logger.Info("UpdateCustomer called", zap.String("id", id))
 
+		if id == "" {
+			logger.Warn("Customer ID not provided")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Customer ID must be provided"})
+			return
+		}
+
+		var updateData map[string]interface{}
 		if err := c.ShouldBindJSON(&updateData); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		logger.Info("Update data received", zap.Any("updateData", updateData))
 
-		mobile, ok := updateData["mobile"].(string)
-		if !ok || mobile == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Mobile number must be provided"})
-			return
-		}
-
-		// Retrieve the existing customer by mobile number.
-		existingCustomer, err := h.repo.GetCustomerByMobile(mobile)
+		// Retrieve the existing customer by ID
+		existingCustomer, err := h.repo.GetCustomer(id)
 		if err != nil {
-			logger.Error("Failed to find customer by mobile", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find customer by mobile"})
+			logger.Error("Failed to find customer by ID", zap.Error(err), zap.String("id", id))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find customer"})
 			return
 		}
-		if existingCustomer == nil || existingCustomer.ID == "" {
+		if existingCustomer == nil {
+			logger.Warn("Customer not found", zap.String("id", id))
 			c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
 			return
 		}
+		logger.Info("Existing customer found", zap.String("id", existingCustomer.ID), zap.String("name", existingCustomer.Name))
 
-		// Update fields based on provided data.
+		// Prevent updating the mobile number
+		if _, exists := updateData["mobile"]; exists {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Mobile number cannot be updated"})
+			return
+		}
+
+		// Update fields based on provided data
 		if name, ok := updateData["name"].(string); ok {
 			existingCustomer.Name = name
 		}
@@ -214,7 +229,7 @@ func (h *customerHandler) UpdateCustomer() gin.HandlerFunc {
 		if area, ok := updateData["area"].(string); ok {
 			existingCustomer.Area = area
 		}
-		existingCustomer.UpdatedAt = time.Now() // Ensure updated timestamp is set
+		existingCustomer.UpdatedAt = time.Now()
 
 		err = h.repo.UpdateCustomer(existingCustomer)
 		if err != nil {
@@ -223,14 +238,11 @@ func (h *customerHandler) UpdateCustomer() gin.HandlerFunc {
 			return
 		}
 
-		logger.Info("Customer updated successfully",
-			zap.String("id", existingCustomer.ID),
-			zap.String("mobile", existingCustomer.Mobile),
-		)
-
+		logger.Info("Customer updated successfully", zap.String("id", existingCustomer.ID), zap.String("name", existingCustomer.Name))
 		c.JSON(http.StatusOK, gin.H{"message": "Customer updated successfully", "customer": existingCustomer})
 	}
 }
+
 func (h *customerHandler) DeleteCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		mobile := c.Query("mobile")
