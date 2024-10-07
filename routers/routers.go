@@ -30,10 +30,28 @@ func InitRouter() *gin.Engine {
 	router.GET("/metrics", metrics.MetricsHandler())
 
 	apiV1 := router.Group("/api/v1")
+
+	packageRepo := repositories.NewGormPackageRepository()
+	packageHandler := handlers.NewPackageHandler(packageRepo)
 	packageRoutes := apiV1.Group("/packages")
 	{
-		packageRoutes.GET("/internet", handlers.CurrentInternetPackagesHandler)
-		packageRoutes.GET("/cabletv", handlers.CurrentCableTVPackagesHandler)
+		internetRoutes := packageRoutes.Group("/internet")
+		{
+			internetRoutes.POST("", packageHandler.CreateInternetPackage())
+			internetRoutes.PUT("/:id", packageHandler.UpdateInternetPackage())
+			internetRoutes.DELETE("/:id", packageHandler.DeleteInternetPackage())
+			internetRoutes.GET("/:id", packageHandler.GetInternetPackage())
+			internetRoutes.GET("", packageHandler.GetAllInternetPackages())
+		}
+
+		cableTVRoutes := packageRoutes.Group("/cabletv")
+		{
+			cableTVRoutes.POST("", packageHandler.CreateCableTVPackage())
+			cableTVRoutes.PUT("/:id", packageHandler.UpdateCableTVPackage())
+			cableTVRoutes.DELETE("/:id", packageHandler.DeleteCableTVPackage())
+			cableTVRoutes.GET("/:id", packageHandler.GetCableTVPackage())
+			cableTVRoutes.GET("", packageHandler.GetAllCableTVPackages())
+		}
 	}
 
 	buildingRoutes := apiV1.Group("/buildings")

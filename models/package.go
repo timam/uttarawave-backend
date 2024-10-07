@@ -1,6 +1,11 @@
 package models
 
+import (
+	"time"
+)
+
 type ConnectionClass string
+type BandwidthType string
 
 const (
 	Home      ConnectionClass = "home"
@@ -8,24 +13,31 @@ const (
 	Corporate ConnectionClass = "corporate"
 )
 
-type BandwidthType string
-
 const (
 	Shared    BandwidthType = "shared"
 	Dedicated BandwidthType = "dedicated"
 )
 
 type InternetPackage struct {
-	PackageName     string          `csv:"PackageName"`
-	Bandwidth       string          `csv:"Bandwidth"` // e.g., "10Mbps"
-	Price           string          `csv:"Price"`
-	ConnectionClass ConnectionClass `csv:"ConnectionClass"`
-	BandwidthType   BandwidthType   `csv:"BandwidthType"`
-	RealIP          string          `csv:"RealIP"`
+	ID              string          `gorm:"primaryKey" json:"id"`
+	PackageName     string          `gorm:"uniqueIndex" json:"packageName"`
+	Bandwidth       string          `json:"bandwidth"`
+	Price           string          `json:"price"`
+	ConnectionClass ConnectionClass `json:"connectionClass"`
+	BandwidthType   BandwidthType   `json:"bandwidthType"`
+	RealIP          string          `json:"realIP"`
+	IsActive        bool            `gorm:"default:true" json:"isActive"`
+	CreatedAt       time.Time       `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt       time.Time       `gorm:"autoUpdateTime" json:"updatedAt"`
 }
 
 type CableTVPackage struct {
-	PackageName string `csv:"PackageName"`
-	Price       string `csv:"Price"`
-	TVCount     string `csv:"TVCount"`
+	ID              string          `gorm:"primaryKey" json:"id"`
+	PackageName     string          `gorm:"uniqueIndex" json:"packageName"`
+	Price           string          `json:"price"`
+	ConnectionClass ConnectionClass `json:"connectionClass"`
+	TVCount         string          `json:"tvCount"`
+	IsActive        bool            `gorm:"default:true" json:"isActive"`
+	CreatedAt       time.Time       `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt       time.Time       `gorm:"autoUpdateTime" json:"updatedAt"`
 }
