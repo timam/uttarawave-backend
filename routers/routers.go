@@ -76,14 +76,14 @@ func InitRouter() *gin.Engine {
 	}
 
 	subscriptionRepo := repositories.NewGormSubscriptionRepository()
-	subscriptionHandler := handlers.NewSubscriptionHandler(subscriptionRepo)
+	subscriptionHandler := handlers.NewSubscriptionHandler(subscriptionRepo, packageRepo)
 	subscriptionRoutes := apiV1.Group("/subscriptions")
 	{
-		subscriptionRoutes.POST("/", subscriptionHandler.CreateSubscription())
-		subscriptionRoutes.GET("/", subscriptionHandler.GetAllSubscriptions())
+		subscriptionRoutes.POST("", subscriptionHandler.CreateSubscription())
 		subscriptionRoutes.GET("/:id", subscriptionHandler.GetSubscription())
 		subscriptionRoutes.PUT("/:id", subscriptionHandler.UpdateSubscription())
 		subscriptionRoutes.DELETE("/:id", subscriptionHandler.DeleteSubscription())
+		subscriptionRoutes.GET("", subscriptionHandler.GetAllSubscriptions())
 	}
 
 	logger.Info("Router initialized successfully")

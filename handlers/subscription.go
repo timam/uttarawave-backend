@@ -12,12 +12,14 @@ import (
 )
 
 type subscriptionHandler struct {
-	repo repositories.SubscriptionRepository
+	repo        repositories.SubscriptionRepository
+	packageRepo repositories.PackageRepository
 }
 
-func NewSubscriptionHandler(repo repositories.SubscriptionRepository) *subscriptionHandler {
+func NewSubscriptionHandler(repo repositories.SubscriptionRepository, packageRepo repositories.PackageRepository) *subscriptionHandler {
 	return &subscriptionHandler{
-		repo: repo,
+		repo:        repo,
+		packageRepo: packageRepo,
 	}
 }
 
@@ -31,6 +33,33 @@ func (h *subscriptionHandler) CreateSubscription() gin.HandlerFunc {
 			return
 		}
 
+		// Validate package
+		var pkg interface{}
+		var err error
+		if subscription.Type == models.Internet {
+			pkg, err = h.packageRepo.GetInternetPackageByID(c.Request.Context(), subscription.PackageID)
+		} else if subscription.Type == models.CableTV {
+			pkg, err = h.packageRepo.GetCableTVPackageByID(c.Request.Context(), subscription.PackageID)
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid subscription type"})
+			return
+		}
+
+		if err != nil {
+			logger.Error("Failed to get package", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid package ID"})
+			return
+		}
+
+		// Set package details
+		if internetPkg, ok := pkg.(*models.InternetPackage); ok {
+			subscription.PackageName = internetPkg.PackageName
+			subscription.PackagePrice = internetPkg.Price
+		} else if cableTVPkg, ok := pkg.(*models.CableTVPackage); ok {
+			subscription.PackageName = cableTVPkg.PackageName
+			subscription.PackagePrice = cableTVPkg.Price
+		}
+
 		// Generate a unique ID for the subscription
 		subscription.ID = uuid.New().String()
 
@@ -40,7 +69,7 @@ func (h *subscriptionHandler) CreateSubscription() gin.HandlerFunc {
 		// Set RenewalDate to the first day of next month
 		subscription.RenewalDate = getFirstDayOfNextMonth(subscription.StartDate)
 
-		err := h.repo.CreateSubscription(c.Request.Context(), &subscription)
+		err = h.repo.CreateSubscription(c.Request.Context(), &subscription)
 		if err != nil {
 			logger.Error("Failed to create subscription", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create subscription"})
@@ -111,7 +140,6 @@ func (h *subscriptionHandler) UpdateSubscription() gin.HandlerFunc {
 		existingSubscription.Type = updateData.Type
 		existingSubscription.PackageName = updateData.PackageName
 		existingSubscription.PackagePrice = updateData.PackagePrice
-		existingSubscription.PackageVersion = updateData.PackageVersion
 		existingSubscription.Discount = updateData.Discount
 		existingSubscription.Status = updateData.Status
 		existingSubscription.DeviceID = updateData.DeviceID
