@@ -12,7 +12,7 @@ import (
 )
 
 func InitializeLogger() error {
-	config := zap.NewProductionConfig()
+	config := zap.NewProductionConfig() //TODO: suggaredLog for loosely typed data
 	config.EncoderConfig.TimeKey = "timestamp"
 	config.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	config.EncoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
