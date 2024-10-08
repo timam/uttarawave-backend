@@ -32,10 +32,12 @@ type Device struct {
 	CustomerID     string  `gorm:"index" json:"customerId,omitempty"`
 	SubscriptionID string  `gorm:"index" json:"subscriptionId,omitempty"`
 	SerialNumber   string  `gorm:"uniqueIndex;type:varchar(50)" json:"serialNumber"`
+	Brand          string  `gorm:"type:varchar(50)" json:"brand"`
+	Model          string  `gorm:"type:varchar(50)" json:"model"`
 
-	PurchaseDate   time.Time `json:"purchaseDate"`
-	AssignedDate   time.Time `json:"assignedDate,omitempty"`
-	CollectionDate time.Time `json:"collectionDate,omitempty"`
+	PurchaseDate   *time.Time `json:"purchaseDate,omitempty"`
+	AssignedDate   *time.Time `json:"assignedDate,omitempty"`
+	CollectionDate *time.Time `json:"collectionDate,omitempty"`
 
 	Type      DeviceType   `gorm:"type:varchar(20)" json:"type"`
 	Usage     DeviceUsage  `gorm:"type:varchar(20)" json:"usage"`

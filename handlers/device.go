@@ -8,6 +8,7 @@ import (
 	"github.com/timam/uttarawave-backend/repositories"
 	"go.uber.org/zap"
 	"net/http"
+	"time"
 )
 
 type deviceHandler struct {
@@ -34,6 +35,19 @@ func (h *deviceHandler) CreateDevice() gin.HandlerFunc {
 		// Generate a unique ID for the device
 		device.ID = uuid.New().String()
 
+		// Validate required fields
+		if device.Brand == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Brand is required"})
+			return
+		}
+
+		// Set date fields only if they are provided
+		now := time.Now()
+		if device.PurchaseDate == nil {
+			device.PurchaseDate = &now
+		}
+		// AssignedDate and CollectionDate remain nil if not provided
+
 		// If BuildingID is provided, verify that the building exists
 		if device.BuildingID != nil && *device.BuildingID != "" {
 			building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), *device.BuildingID)
@@ -55,7 +69,6 @@ func (h *deviceHandler) CreateDevice() gin.HandlerFunc {
 		c.JSON(http.StatusCreated, gin.H{"message": "Device created successfully", "device": device})
 	}
 }
-
 func (h *deviceHandler) GetDevice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -73,22 +86,36 @@ func (h *deviceHandler) GetDevice() gin.HandlerFunc {
 func (h *deviceHandler) UpdateDevice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		var device models.Device
-		if err := c.ShouldBindJSON(&device); err != nil {
+		var updatedDevice models.Device
+		if err := c.ShouldBindJSON(&updatedDevice); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		device.ID = id
-		err := h.repo.UpdateDevice(c.Request.Context(), &device)
+		existingDevice, err := h.repo.GetDeviceByID(c.Request.Context(), id)
+		if err != nil {
+			logger.Error("Failed to get existing device", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get existing device"})
+			return
+		}
+
+		// Update fields
+		existingDevice.Brand = updatedDevice.Brand
+		existingDevice.Model = updatedDevice.Model
+		existingDevice.SerialNumber = updatedDevice.SerialNumber
+		existingDevice.Type = updatedDevice.Type
+		existingDevice.Usage = updatedDevice.Usage
+		existingDevice.Status = updatedDevice.Status
+
+		err = h.repo.UpdateDevice(c.Request.Context(), existingDevice)
 		if err != nil {
 			logger.Error("Failed to update device", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update device"})
 			return
 		}
 
-		c.JSON(http.StatusOK, device)
+		c.JSON(http.StatusOK, existingDevice)
 	}
 }
 
