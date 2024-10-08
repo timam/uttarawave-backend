@@ -15,9 +15,3 @@ type Building struct {
 	CreatedAt          time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt          time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }
-
-type BuildingDevice struct {
-	BuildingID string    `gorm:"primaryKey"`
-	DeviceID   string    `gorm:"primaryKey"`
-	CreatedAt  time.Time `gorm:"autoCreateTime"`
-}
