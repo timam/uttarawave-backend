@@ -17,17 +17,29 @@ const (
 	CompanyUse  DeviceUsage = "CompanyUse"
 )
 
+type DeviceStatus string
+
+const (
+	InStock            DeviceStatus = "InStock"
+	AssignedToCustomer DeviceStatus = "AssignedToCustomer"
+	AssignedToBuilding DeviceStatus = "AssignedToBuilding"
+	PendingCollection  DeviceStatus = "PendingCollection"
+)
+
 type Device struct {
-	ID           string      `gorm:"primaryKey" json:"id"`
-	Type         DeviceType  `gorm:"type:varchar(20)" json:"type"`
-	SerialNumber string      `gorm:"uniqueIndex;type:varchar(50)" json:"serialNumber"`
-	PurchaseDate time.Time   `json:"purchaseDate"`
-	Usage        DeviceUsage `gorm:"type:varchar(20)" json:"usage"`
-	CustomerID   string      `gorm:"index;foreignKey:ID" json:"customerId,omitempty"`
-	BuildingID   string      `gorm:"index;foreignKey:ID" json:"buildingId,omitempty"`
-	Status       string      `gorm:"type:varchar(20)" json:"status"`
-	AssignedDate time.Time   `json:"assignedDate,omitempty"`
-	ReturnDate   time.Time   `json:"returnDate,omitempty"`
-	CreatedAt    time.Time   `gorm:"autoCreateTime" json:"createdAt"`
-	UpdatedAt    time.Time   `gorm:"autoUpdateTime" json:"updatedAt"`
+	ID             string  `gorm:"primaryKey" json:"id"`
+	BuildingID     *string `gorm:"index;foreignKey:ID" json:"buildingId,omitempty"`
+	CustomerID     string  `gorm:"index" json:"customerId,omitempty"`
+	SubscriptionID string  `gorm:"index" json:"subscriptionId,omitempty"`
+	SerialNumber   string  `gorm:"uniqueIndex;type:varchar(50)" json:"serialNumber"`
+
+	PurchaseDate   time.Time `json:"purchaseDate"`
+	AssignedDate   time.Time `json:"assignedDate,omitempty"`
+	CollectionDate time.Time `json:"collectionDate,omitempty"`
+
+	Type      DeviceType   `gorm:"type:varchar(20)" json:"type"`
+	Usage     DeviceUsage  `gorm:"type:varchar(20)" json:"usage"`
+	Status    DeviceStatus `gorm:"type:varchar(20)" json:"status"`
+	CreatedAt time.Time    `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt time.Time    `gorm:"autoUpdateTime" json:"updatedAt"`
 }

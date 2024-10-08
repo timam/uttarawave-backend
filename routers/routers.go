@@ -54,8 +54,19 @@ func InitRouter() *gin.Engine {
 		}
 	}
 
+	buildingRepo := repositories.NewGormBuildingRepository()
+	buildingRoutes := apiV1.Group("/buildings")
+	{
+		buildingHandler := handlers.NewBuildingHandler()
+		buildingRoutes.POST("", buildingHandler.AddBuilding())
+		buildingRoutes.GET("", buildingHandler.GetAllBuildings())
+		buildingRoutes.GET("/:id", buildingHandler.GetBuilding())
+		buildingRoutes.PATCH("/:id", buildingHandler.UpdateBuilding())
+		buildingRoutes.DELETE("/:id", buildingHandler.DeleteBuilding())
+	}
+
 	deviceRepo := repositories.NewGormDeviceRepository()
-	deviceHandler := handlers.NewDeviceHandler(deviceRepo)
+	deviceHandler := handlers.NewDeviceHandler(deviceRepo, buildingRepo)
 	deviceRoutes := apiV1.Group("/devices")
 	{
 		deviceRoutes.POST("", deviceHandler.CreateDevice())
@@ -68,18 +79,7 @@ func InitRouter() *gin.Engine {
 		deviceRoutes.POST("/:id/unassign", deviceHandler.UnassignDevice())
 	}
 
-	buildingRoutes := apiV1.Group("/buildings")
-	{
-		buildingHandler := handlers.NewBuildingHandler()
-		buildingRoutes.POST("", buildingHandler.AddBuilding())
-		buildingRoutes.GET("", buildingHandler.GetAllBuildings())
-		buildingRoutes.GET("/:id", buildingHandler.GetBuilding())
-		buildingRoutes.PATCH("/:id", buildingHandler.UpdateBuilding())
-		buildingRoutes.DELETE("/:id", buildingHandler.DeleteBuilding())
-	}
-
 	customerRepo := repositories.NewGormCustomerRepository()
-	buildingRepo := repositories.NewGormBuildingRepository()
 	customerHandler := handlers.NewCustomerHandler(customerRepo, buildingRepo)
 	customerRoutes := apiV1.Group("/customers")
 	{
@@ -91,7 +91,7 @@ func InitRouter() *gin.Engine {
 	}
 
 	subscriptionRepo := repositories.NewGormSubscriptionRepository()
-	subscriptionHandler := handlers.NewSubscriptionHandler(subscriptionRepo, packageRepo)
+	subscriptionHandler := handlers.NewSubscriptionHandler(subscriptionRepo, packageRepo, deviceRepo)
 	subscriptionRoutes := apiV1.Group("/subscriptions")
 	{
 		subscriptionRoutes.POST("", subscriptionHandler.CreateSubscription())

@@ -11,12 +11,14 @@ import (
 )
 
 type deviceHandler struct {
-	repo repositories.DeviceRepository
+	repo         repositories.DeviceRepository
+	buildingRepo repositories.BuildingRepository
 }
 
-func NewDeviceHandler(repo repositories.DeviceRepository) *deviceHandler {
+func NewDeviceHandler(repo repositories.DeviceRepository, buildingRepo repositories.BuildingRepository) *deviceHandler {
 	return &deviceHandler{
-		repo: repo,
+		repo:         repo,
+		buildingRepo: buildingRepo,
 	}
 }
 
@@ -29,7 +31,19 @@ func (h *deviceHandler) CreateDevice() gin.HandlerFunc {
 			return
 		}
 
+		// Generate a unique ID for the device
 		device.ID = uuid.New().String()
+
+		// If BuildingID is provided, verify that the building exists
+		if device.BuildingID != nil && *device.BuildingID != "" {
+			building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), *device.BuildingID)
+			if err != nil || building == nil {
+				logger.Error("Invalid BuildingID provided", zap.Error(err))
+				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid BuildingID provided"})
+				return
+			}
+		}
+
 		err := h.repo.CreateDevice(c.Request.Context(), &device)
 		if err != nil {
 			logger.Error("Failed to create device", zap.Error(err))
@@ -37,7 +51,8 @@ func (h *deviceHandler) CreateDevice() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, device)
+		logger.Info("Device created successfully", zap.String("id", device.ID))
+		c.JSON(http.StatusCreated, gin.H{"message": "Device created successfully", "device": device})
 	}
 }
 
@@ -108,12 +123,13 @@ func (h *deviceHandler) AssignDeviceToCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		deviceID := c.Param("id")
 		customerID := c.Query("customerId")
-		if customerID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Customer ID is required"})
+		subscriptionID := c.Query("subscriptionId")
+		if customerID == "" || subscriptionID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Customer ID and Subscription ID are required"})
 			return
 		}
 
-		err := h.repo.AssignDeviceToCustomer(c.Request.Context(), deviceID, customerID)
+		err := h.repo.AssignDeviceToCustomer(c.Request.Context(), deviceID, customerID, subscriptionID)
 		if err != nil {
 			logger.Error("Failed to assign device to customer", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign device to customer"})

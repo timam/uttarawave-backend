@@ -13,9 +13,12 @@ type DeviceRepository interface {
 	GetAllDevices(ctx context.Context) ([]models.Device, error)
 	UpdateDevice(ctx context.Context, device *models.Device) error
 	DeleteDevice(ctx context.Context, id string) error
-	AssignDeviceToCustomer(ctx context.Context, deviceID, customerID string) error
+	AssignDeviceToCustomer(ctx context.Context, deviceID, customerID, subscriptionID string) error
 	AssignDeviceToBuilding(ctx context.Context, deviceID, buildingID string) error
 	UnassignDevice(ctx context.Context, deviceID string) error
+	MarkDeviceForCollection(ctx context.Context, deviceID string) error
+	ReturnDeviceToStock(ctx context.Context, deviceID string) error
+	GetDevicesByStatus(ctx context.Context, status models.DeviceStatus) ([]models.Device, error)
 }
 
 type GormDeviceRepository struct{}
@@ -25,9 +28,12 @@ func NewGormDeviceRepository() *GormDeviceRepository {
 }
 
 func (r *GormDeviceRepository) CreateDevice(ctx context.Context, device *models.Device) error {
-	return db.DB.WithContext(ctx).Create(device).Error
+	result := db.DB.WithContext(ctx).Create(device)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
 }
-
 func (r *GormDeviceRepository) GetDeviceByID(ctx context.Context, id string) (*models.Device, error) {
 	var device models.Device
 	err := db.DB.WithContext(ctx).First(&device, "id = ?", id).Error
@@ -48,32 +54,56 @@ func (r *GormDeviceRepository) DeleteDevice(ctx context.Context, id string) erro
 	return db.DB.WithContext(ctx).Delete(&models.Device{}, "id = ?", id).Error
 }
 
-func (r *GormDeviceRepository) AssignDeviceToCustomer(ctx context.Context, deviceID, customerID string) error {
+func (r *GormDeviceRepository) AssignDeviceToCustomer(ctx context.Context, deviceID, customerID, subscriptionID string) error {
 	return db.DB.WithContext(ctx).Model(&models.Device{}).Where("id = ?", deviceID).Updates(map[string]interface{}{
-		"customer_id":   customerID,
-		"building_id":   nil,
-		"usage":         models.CustomerUse,
-		"assigned_date": time.Now(),
-		"return_date":   nil,
+		"customer_id":     customerID,
+		"subscription_id": subscriptionID,
+		"status":          models.AssignedToCustomer,
+		"assigned_date":   time.Now(),
+		"collection_date": nil,
 	}).Error
 }
 
 func (r *GormDeviceRepository) AssignDeviceToBuilding(ctx context.Context, deviceID, buildingID string) error {
 	return db.DB.WithContext(ctx).Model(&models.Device{}).Where("id = ?", deviceID).Updates(map[string]interface{}{
-		"building_id":   buildingID,
-		"customer_id":   nil,
-		"usage":         models.BuildingUse,
-		"assigned_date": time.Now(),
-		"return_date":   nil,
+		"building_id":     buildingID,
+		"status":          models.AssignedToBuilding,
+		"assigned_date":   time.Now(),
+		"collection_date": nil,
 	}).Error
 }
 
 func (r *GormDeviceRepository) UnassignDevice(ctx context.Context, deviceID string) error {
 	return db.DB.WithContext(ctx).Model(&models.Device{}).Where("id = ?", deviceID).Updates(map[string]interface{}{
-		"customer_id":   nil,
-		"building_id":   nil,
-		"usage":         models.CompanyUse,
-		"return_date":   time.Now(),
-		"assigned_date": nil,
+		"customer_id":     nil,
+		"building_id":     nil,
+		"subscription_id": nil,
+		"status":          models.InStock,
+		"assigned_date":   nil,
+		"collection_date": nil,
 	}).Error
+}
+
+func (r *GormDeviceRepository) MarkDeviceForCollection(ctx context.Context, deviceID string) error {
+	return db.DB.WithContext(ctx).Model(&models.Device{}).Where("id = ?", deviceID).Updates(map[string]interface{}{
+		"status":          models.PendingCollection,
+		"collection_date": time.Now(),
+	}).Error
+}
+
+func (r *GormDeviceRepository) ReturnDeviceToStock(ctx context.Context, deviceID string) error {
+	return db.DB.WithContext(ctx).Model(&models.Device{}).Where("id = ?", deviceID).Updates(map[string]interface{}{
+		"customer_id":     nil,
+		"building_id":     nil,
+		"subscription_id": nil,
+		"status":          models.InStock,
+		"assigned_date":   nil,
+		"collection_date": nil,
+	}).Error
+}
+
+func (r *GormDeviceRepository) GetDevicesByStatus(ctx context.Context, status models.DeviceStatus) ([]models.Device, error) {
+	var devices []models.Device
+	err := db.DB.WithContext(ctx).Where("status = ?", status).Find(&devices).Error
+	return devices, err
 }
