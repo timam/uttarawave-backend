@@ -13,7 +13,7 @@ type DeviceRepository interface {
 	GetAllDevices(ctx context.Context) ([]models.Device, error)
 	UpdateDevice(ctx context.Context, device *models.Device) error
 	DeleteDevice(ctx context.Context, id string) error
-	AssignDeviceToCustomer(ctx context.Context, deviceID, customerID, subscriptionID string) error
+	AssignDeviceToSubscription(ctx context.Context, deviceID, subscriptionID string) error
 	AssignDeviceToBuilding(ctx context.Context, deviceID, buildingID string) error
 	UnassignDevice(ctx context.Context, deviceID string) error
 	MarkDeviceForCollection(ctx context.Context, deviceID string) error
@@ -54,9 +54,8 @@ func (r *GormDeviceRepository) DeleteDevice(ctx context.Context, id string) erro
 	return db.DB.WithContext(ctx).Delete(&models.Device{}, "id = ?", id).Error
 }
 
-func (r *GormDeviceRepository) AssignDeviceToCustomer(ctx context.Context, deviceID, customerID, subscriptionID string) error {
+func (r *GormDeviceRepository) AssignDeviceToSubscription(ctx context.Context, deviceID, subscriptionID string) error {
 	return db.DB.WithContext(ctx).Model(&models.Device{}).Where("id = ?", deviceID).Updates(map[string]interface{}{
-		"customer_id":     customerID,
 		"subscription_id": subscriptionID,
 		"status":          models.AssignedToCustomer,
 		"assigned_date":   time.Now(),

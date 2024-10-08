@@ -119,37 +119,50 @@ func (h *deviceHandler) GetAllDevices() gin.HandlerFunc {
 	}
 }
 
-func (h *deviceHandler) AssignDeviceToCustomer() gin.HandlerFunc {
+func (h *deviceHandler) AssignDeviceToSubscription() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		deviceID := c.Param("id")
-		customerID := c.Query("customerId")
-		subscriptionID := c.Query("subscriptionId")
-		if customerID == "" || subscriptionID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Customer ID and Subscription ID are required"})
+		var request struct {
+			SubscriptionID string `json:"subscriptionId"`
+		}
+		if err := c.ShouldBindJSON(&request); err != nil {
+			logger.Error("Failed to bind JSON", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if request.SubscriptionID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Subscription ID is required"})
 			return
 		}
 
-		err := h.repo.AssignDeviceToCustomer(c.Request.Context(), deviceID, customerID, subscriptionID)
+		err := h.repo.AssignDeviceToSubscription(c.Request.Context(), deviceID, request.SubscriptionID)
 		if err != nil {
-			logger.Error("Failed to assign device to customer", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign device to customer"})
+			logger.Error("Failed to assign device to subscription", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign device to subscription"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Device assigned to customer successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "Device assigned to subscription successfully"})
 	}
 }
 
 func (h *deviceHandler) AssignDeviceToBuilding() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		deviceID := c.Param("id")
-		buildingID := c.Query("buildingId")
-		if buildingID == "" {
+		var request struct {
+			BuildingID string `json:"buildingId"`
+		}
+		if err := c.ShouldBindJSON(&request); err != nil {
+			logger.Error("Failed to bind JSON", zap.Error(err))
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if request.BuildingID == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Building ID is required"})
 			return
 		}
 
-		err := h.repo.AssignDeviceToBuilding(c.Request.Context(), deviceID, buildingID)
+		err := h.repo.AssignDeviceToBuilding(c.Request.Context(), deviceID, request.BuildingID)
 		if err != nil {
 			logger.Error("Failed to assign device to building", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign device to building"})

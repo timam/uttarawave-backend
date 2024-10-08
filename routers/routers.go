@@ -74,8 +74,8 @@ func InitRouter() *gin.Engine {
 		deviceRoutes.PUT("/:id", deviceHandler.UpdateDevice())
 		deviceRoutes.DELETE("/:id", deviceHandler.DeleteDevice())
 		deviceRoutes.GET("", deviceHandler.GetAllDevices())
-		deviceRoutes.POST("/:id/assign-customer", deviceHandler.AssignDeviceToCustomer())
-		deviceRoutes.POST("/:id/assign-building", deviceHandler.AssignDeviceToBuilding())
+		deviceRoutes.POST("/:id/assign-to-subscription", deviceHandler.AssignDeviceToSubscription())
+		deviceRoutes.POST("/:id/assign-to-building", deviceHandler.AssignDeviceToBuilding())
 		deviceRoutes.POST("/:id/unassign", deviceHandler.UnassignDevice())
 	}
 
