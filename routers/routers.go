@@ -54,6 +54,20 @@ func InitRouter() *gin.Engine {
 		}
 	}
 
+	deviceRepo := repositories.NewGormDeviceRepository()
+	deviceHandler := handlers.NewDeviceHandler(deviceRepo)
+	deviceRoutes := apiV1.Group("/devices")
+	{
+		deviceRoutes.POST("", deviceHandler.CreateDevice())
+		deviceRoutes.GET("/:id", deviceHandler.GetDevice())
+		deviceRoutes.PUT("/:id", deviceHandler.UpdateDevice())
+		deviceRoutes.DELETE("/:id", deviceHandler.DeleteDevice())
+		deviceRoutes.GET("", deviceHandler.GetAllDevices())
+		deviceRoutes.POST("/:id/assign-customer", deviceHandler.AssignDeviceToCustomer())
+		deviceRoutes.POST("/:id/assign-building", deviceHandler.AssignDeviceToBuilding())
+		deviceRoutes.POST("/:id/unassign", deviceHandler.UnassignDevice())
+	}
+
 	buildingRoutes := apiV1.Group("/buildings")
 	{
 		buildingHandler := handlers.NewBuildingHandler()

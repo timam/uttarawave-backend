@@ -8,6 +8,7 @@ type DeviceUsage string
 const (
 	ONU    DeviceType = "ONU"
 	Switch DeviceType = "Switch"
+	OLT    DeviceType = "OLT"
 )
 
 const (
@@ -25,6 +26,8 @@ type Device struct {
 	CustomerID   string      `gorm:"index;foreignKey:ID" json:"customerId,omitempty"`
 	BuildingID   string      `gorm:"index;foreignKey:ID" json:"buildingId,omitempty"`
 	Status       string      `gorm:"type:varchar(20)" json:"status"`
+	AssignedDate time.Time   `json:"assignedDate,omitempty"`
+	ReturnDate   time.Time   `json:"returnDate,omitempty"`
 	CreatedAt    time.Time   `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt    time.Time   `gorm:"autoUpdateTime" json:"updatedAt"`
 }
