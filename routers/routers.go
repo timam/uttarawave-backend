@@ -101,6 +101,13 @@ func InitRouter() *gin.Engine {
 		subscriptionRoutes.GET("", subscriptionHandler.GetAllSubscriptions())
 	}
 
+	transactionRepo := repositories.NewGormTransactionRepository()
+	transactionHandler := handlers.NewTransactionHandler(transactionRepo, subscriptionRepo)
+	transactionRoutes := apiV1.Group("/transactions")
+	{
+		transactionRoutes.POST("/cash", transactionHandler.ProcessCashTransaction())
+	}
+
 	logger.Info("Router initialized successfully")
 	return router
 }

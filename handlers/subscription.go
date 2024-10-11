@@ -26,6 +26,12 @@ func NewSubscriptionHandler(repo repositories.SubscriptionRepository, packageRep
 	}
 }
 
+func getFirstDayOfNextMonth(date time.Time) time.Time {
+	currentYear, currentMonth, _ := date.Date()
+	firstOfNextMonth := time.Date(currentYear, currentMonth+1, 1, 0, 0, 0, 0, date.Location())
+	return firstOfNextMonth
+}
+
 func (h *subscriptionHandler) CreateSubscription() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var subscription models.Subscription
@@ -33,6 +39,11 @@ func (h *subscriptionHandler) CreateSubscription() gin.HandlerFunc {
 		if err := c.ShouldBindJSON(&subscription); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if subscription.CustomerID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "CustomerID is required"})
 			return
 		}
 
@@ -72,6 +83,9 @@ func (h *subscriptionHandler) CreateSubscription() gin.HandlerFunc {
 		// Set RenewalDate to the first day of next month
 		subscription.RenewalDate = getFirstDayOfNextMonth(subscription.StartDate)
 
+		// Set PaidUntil to StartDate (assuming no payment has been made yet)
+		subscription.PaidUntil = subscription.StartDate
+
 		err = h.repo.CreateSubscription(c.Request.Context(), &subscription)
 		if err != nil {
 			logger.Error("Failed to create subscription", zap.Error(err))
@@ -82,11 +96,6 @@ func (h *subscriptionHandler) CreateSubscription() gin.HandlerFunc {
 		logger.Info("Subscription created successfully", zap.String("id", subscription.ID))
 		c.JSON(http.StatusCreated, gin.H{"message": "Subscription created successfully", "subscription": subscription})
 	}
-}
-
-func getFirstDayOfNextMonth(date time.Time) time.Time {
-	firstOfMonth := date.AddDate(0, 1, 0)
-	return time.Date(firstOfMonth.Year(), firstOfMonth.Month(), 1, 0, 0, 0, 0, firstOfMonth.Location())
 }
 func (h *subscriptionHandler) GetSubscription() gin.HandlerFunc {
 	return func(c *gin.Context) {

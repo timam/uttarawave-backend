@@ -20,6 +20,7 @@ type Subscription struct {
 	Status       string           `json:"status"`
 	StartDate    time.Time        `json:"startDate"`
 	RenewalDate  time.Time        `json:"renewalDate"`
+	PaidUntil    time.Time        `json:"paidUntil"`
 	DeviceID     string           `gorm:"index" json:"deviceId,omitempty"`
 	CreatedAt    time.Time        `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt    time.Time        `gorm:"autoUpdateTime" json:"updatedAt"`

@@ -55,6 +55,6 @@ func (r *GormSubscriptionRepository) GetAllSubscriptions(ctx context.Context) ([
 
 func (r *GormSubscriptionRepository) GetExpiredSubscriptions(ctx context.Context) ([]models.Subscription, error) {
 	var expiredSubscriptions []models.Subscription
-	err := db.DB.WithContext(ctx).Where("renewal_date < ? AND status != ?", time.Now(), "Expired").Find(&expiredSubscriptions).Error
+	err := db.DB.WithContext(ctx).Where("renewal_date <= ? AND status != ?", time.Now(), "Expired").Find(&expiredSubscriptions).Error
 	return expiredSubscriptions, err
 }

@@ -46,7 +46,8 @@ func InitializePostgreSQL() error {
 		&models.Building{},
 		&models.Device{},
 		&models.Customer{},
-		&models.Subscription{})
+		&models.Subscription{},
+		&models.Transaction{})
 	if err != nil {
 		logger.Error("Failed to auto migrate schema", zap.Error(err))
 		return fmt.Errorf("failed to auto migrate schema: %v", err)
