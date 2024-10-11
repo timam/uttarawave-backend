@@ -65,11 +65,18 @@ func (h *transactionHandler) ProcessCashTransaction() gin.HandlerFunc {
 		// Update subscription
 		subscription.Status = "Active"
 
-		// Calculate the number of months paid for
-		monthsPaid := int(transactionInfo.Amount / getMonthlyPrice(subscription))
+		monthlyPrice := getMonthlyPrice(subscription)
+		totalDue := subscription.DueAmount + monthlyPrice
 
-		// Update PaidUntil
-		subscription.PaidUntil = addMonths(subscription.PaidUntil, monthsPaid)
+		if transactionInfo.Amount >= totalDue {
+			// Full payment or overpayment
+			monthsPaid := int(transactionInfo.Amount / monthlyPrice)
+			subscription.PaidUntil = addMonths(subscription.PaidUntil, monthsPaid)
+			subscription.DueAmount = 0
+		} else {
+			// Partial payment
+			subscription.DueAmount = totalDue - transactionInfo.Amount
+		}
 
 		// Set new RenewalDate
 		subscription.RenewalDate = getFirstDayOfNextMonth(subscription.PaidUntil)
@@ -81,7 +88,11 @@ func (h *transactionHandler) ProcessCashTransaction() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Cash transaction processed successfully", "transaction": transaction})
+		c.JSON(http.StatusOK, gin.H{
+			"message":      "Cash transaction processed successfully",
+			"transaction":  transaction,
+			"subscription": subscription,
+		})
 	}
 }
 

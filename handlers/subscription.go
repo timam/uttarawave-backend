@@ -86,6 +86,9 @@ func (h *subscriptionHandler) CreateSubscription() gin.HandlerFunc {
 		// Set PaidUntil to StartDate (assuming no payment has been made yet)
 		subscription.PaidUntil = subscription.StartDate
 
+		// Initialize DueAmount to 0
+		subscription.DueAmount = 0
+
 		err = h.repo.CreateSubscription(c.Request.Context(), &subscription)
 		if err != nil {
 			logger.Error("Failed to create subscription", zap.Error(err))
@@ -97,6 +100,7 @@ func (h *subscriptionHandler) CreateSubscription() gin.HandlerFunc {
 		c.JSON(http.StatusCreated, gin.H{"message": "Subscription created successfully", "subscription": subscription})
 	}
 }
+
 func (h *subscriptionHandler) GetSubscription() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -152,9 +156,10 @@ func (h *subscriptionHandler) UpdateSubscription() gin.HandlerFunc {
 		existingSubscription.Type = updateData.Type
 		existingSubscription.PackageName = updateData.PackageName
 		existingSubscription.PackagePrice = updateData.PackagePrice
-		existingSubscription.Discount = updateData.Discount
+		existingSubscription.MonthlyDiscount = updateData.MonthlyDiscount
 		existingSubscription.Status = updateData.Status
 		existingSubscription.DeviceID = updateData.DeviceID
+		existingSubscription.DueAmount = updateData.DueAmount
 
 		err = h.repo.UpdateSubscription(c.Request.Context(), existingSubscription)
 		if err != nil {
