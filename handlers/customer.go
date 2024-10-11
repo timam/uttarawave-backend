@@ -28,6 +28,7 @@ func NewCustomerHandler(cr repositories.CustomerRepository, br repositories.Buil
 func generateUniqueID() string {
 	return uuid.New().String()
 }
+
 func (h *customerHandler) CreateCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var customer models.Customer
@@ -45,6 +46,9 @@ func (h *customerHandler) CreateCustomer() gin.HandlerFunc {
 			return
 		}
 
+		var buildingDetails *models.Building
+		var err error
+
 		// Check if BuildingID is provided
 		if customer.BuildingID != "" {
 			// Customer is from an existing building
@@ -52,11 +56,18 @@ func (h *customerHandler) CreateCustomer() gin.HandlerFunc {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Flat is required when BuildingID is provided"})
 				return
 			}
-			// Clear individual address fields
-			customer.House = ""
-			customer.Road = ""
-			customer.Block = ""
-			customer.Area = ""
+			// Get building details
+			buildingDetails, err = h.buildingRepo.GetBuildingDetails(c.Request.Context(), customer.BuildingID)
+			if err != nil {
+				logger.Error("Failed to get building details", zap.Error(err))
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get building details"})
+				return
+			}
+			// Set address fields from building details
+			customer.House = buildingDetails.House
+			customer.Road = buildingDetails.Road
+			customer.Block = buildingDetails.Block
+			customer.Area = buildingDetails.Area
 		} else {
 			// Customer is not from an existing building
 			// Validate address fields
@@ -69,7 +80,7 @@ func (h *customerHandler) CreateCustomer() gin.HandlerFunc {
 		// Generate a unique ID for the customer
 		customer.ID = generateUniqueID()
 
-		err := h.repo.CreateCustomer(c.Request.Context(), &customer)
+		err = h.repo.CreateCustomer(c.Request.Context(), &customer)
 		if err != nil {
 			logger.Error("Failed to save customer data", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save customer data"})
@@ -81,7 +92,12 @@ func (h *customerHandler) CreateCustomer() gin.HandlerFunc {
 			zap.String("mobile", customer.Mobile),
 		)
 
-		c.JSON(http.StatusCreated, gin.H{"message": "Customer created successfully", "customer": customer})
+		response := gin.H{
+			"message":  "Customer created successfully",
+			"customer": customer,
+		}
+
+		c.JSON(http.StatusCreated, response)
 	}
 }
 

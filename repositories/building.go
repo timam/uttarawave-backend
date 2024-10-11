@@ -12,6 +12,7 @@ type BuildingRepository interface {
 	UpdateBuilding(ctx context.Context, id string, updates map[string]interface{}) error
 	GetBuildingByID(ctx context.Context, id string) (*models.Building, error)
 	GetAllBuildings(ctx context.Context) ([]models.Building, error)
+	GetBuildingDetails(ctx context.Context, id string) (*models.Building, error)
 }
 
 type GormBuildingRepository struct{}
@@ -46,4 +47,12 @@ func (r *GormBuildingRepository) GetAllBuildings(ctx context.Context) ([]models.
 		return nil, err
 	}
 	return buildings, nil
+}
+
+func (r *GormBuildingRepository) GetBuildingDetails(ctx context.Context, id string) (*models.Building, error) {
+	var building models.Building
+	if err := db.DB.WithContext(ctx).First(&building, "id = ?", id).Error; err != nil {
+		return nil, err
+	}
+	return &building, nil
 }
