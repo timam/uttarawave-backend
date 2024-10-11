@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/timam/uttarawave-backend/cmd/server"
 	"github.com/timam/uttarawave-backend/internals/configs"
-	"github.com/timam/uttarawave-backend/internals/packages"
 	"github.com/timam/uttarawave-backend/pkg/db"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"github.com/timam/uttarawave-backend/pkg/metrics"
@@ -26,12 +25,6 @@ func init() {
 		logger.Fatal("Config initialization failed", zap.Error(err))
 	}
 	logger.Info("Config initialized successfully")
-
-	err = packages.InitializePackages()
-	if err != nil {
-		logger.Error("Packages initialization failed", zap.Error(err))
-	}
-	logger.Info("Package initialized successfully")
 
 	if err := db.InitializePostgreSQL(); err != nil {
 		logger.Fatal("Failed to initialize PostgreSQL", zap.Error(err))
