@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -157,9 +158,12 @@ func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 
 func (h *customerHandler) GetAllCustomers() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		customers, err := h.repo.GetAllCustomers()
+		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+		pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "50"))
+
+		customers, totalCount, err := h.repo.GetCustomersPaginated(page, pageSize)
 		if err != nil {
-			logger.Error("Failed to get all customers", zap.Error(err))
+			logger.Error("Failed to get customers", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customers"})
 			return
 		}
@@ -198,8 +202,15 @@ func (h *customerHandler) GetAllCustomers() gin.HandlerFunc {
 			processedCustomers = append(processedCustomers, customerData)
 		}
 
-		logger.Info("Retrieved all customers", zap.Int("count", len(processedCustomers)))
-		c.JSON(http.StatusOK, processedCustomers)
+		response := gin.H{
+			"customers":  processedCustomers,
+			"totalCount": totalCount,
+			"page":       page,
+			"pageSize":   pageSize,
+		}
+
+		logger.Info("Retrieved customers", zap.Int("count", len(processedCustomers)), zap.Int("page", page), zap.Int("pageSize", pageSize))
+		c.JSON(http.StatusOK, response)
 	}
 }
 

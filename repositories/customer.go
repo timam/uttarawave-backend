@@ -14,9 +14,9 @@ type CustomerRepository interface {
 	CreateCustomer(ctx context.Context, customer *models.Customer) error
 	GetCustomer(id string) (*models.Customer, error)
 	GetCustomerByMobile(mobile string) (*models.Customer, error)
-	GetAllCustomers() ([]models.Customer, error)
 	UpdateCustomer(customer *models.Customer) error
 	DeleteCustomer(id string) error
+	GetCustomersPaginated(page, pageSize int) ([]models.Customer, int64, error)
 }
 
 type GormCustomerRepository struct{}
@@ -59,15 +59,21 @@ func (r *GormCustomerRepository) GetCustomerByMobile(mobile string) (*models.Cus
 	return &customer, nil
 }
 
-func (r *GormCustomerRepository) GetAllCustomers() ([]models.Customer, error) {
+func (r *GormCustomerRepository) GetCustomersPaginated(page, pageSize int) ([]models.Customer, int64, error) {
 	var customers []models.Customer
-	result := db.DB.Find(&customers)
-	if result.Error != nil {
-		logger.Error("Failed to fetch all customers", zap.Error(result.Error))
-		return nil, result.Error
+	var totalCount int64
+
+	offset := (page - 1) * pageSize
+
+	if err := db.DB.Model(&models.Customer{}).Count(&totalCount).Error; err != nil {
+		return nil, 0, err
 	}
-	logger.Info("Successfully fetched all customers", zap.Int("count", len(customers)))
-	return customers, nil
+
+	if err := db.DB.Offset(offset).Limit(pageSize).Find(&customers).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return customers, totalCount, nil
 }
 
 func (r *GormCustomerRepository) UpdateCustomer(customer *models.Customer) error {
