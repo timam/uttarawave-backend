@@ -84,8 +84,7 @@ func InitRouter() *gin.Engine {
 	customerRoutes := apiV1.Group("/customers")
 	{
 		customerRoutes.POST("", customerHandler.CreateCustomer())
-		customerRoutes.GET("", customerHandler.GetAllCustomers())
-		customerRoutes.GET("/:id", customerHandler.GetCustomer())
+		customerRoutes.GET("", customerHandler.GetCustomer())
 		customerRoutes.PUT("/:id", customerHandler.UpdateCustomer())
 		customerRoutes.DELETE("", customerHandler.DeleteCustomer())
 	}

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -106,7 +105,7 @@ func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 		mobile := c.Query("mobile")
 
 		if mobile == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Mobile number must be provided"})
+			h.GetAllCustomers()(c)
 			return
 		}
 
@@ -134,11 +133,21 @@ func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get building data"})
 				return
 			}
-			address := fmt.Sprintf("%s, %s, %s, %s, %s", customer.Flat, building.House, building.Road, building.Block, building.Area)
-			customerData["address"] = address
+			customerData["address"] = gin.H{
+				"flat":  customer.Flat,
+				"house": building.House,
+				"road":  building.Road,
+				"block": building.Block,
+				"area":  building.Area,
+			}
 		} else {
-			address := fmt.Sprintf("%s, %s, %s, %s", customer.House, customer.Road, customer.Block, customer.Area)
-			customerData["address"] = address
+			customerData["address"] = gin.H{
+				"flat":  customer.Flat,
+				"house": customer.House,
+				"road":  customer.Road,
+				"block": customer.Block,
+				"area":  customer.Area,
+			}
 		}
 
 		logger.Info("Customer retrieved successfully", zap.String("mobile", customer.Mobile))
@@ -169,11 +178,21 @@ func (h *customerHandler) GetAllCustomers() gin.HandlerFunc {
 					logger.Error("Failed to get building data", zap.Error(err))
 					continue
 				}
-				address := fmt.Sprintf("%s, %s, %s, %s, %s", customer.Flat, building.House, building.Road, building.Block, building.Area)
-				customerData["address"] = address
+				customerData["address"] = gin.H{
+					"flat":  customer.Flat,
+					"house": building.House,
+					"road":  building.Road,
+					"block": building.Block,
+					"area":  building.Area,
+				}
 			} else {
-				address := fmt.Sprintf("%s, %s, %s, %s, %s", customer.Flat, customer.House, customer.Road, customer.Block, customer.Area)
-				customerData["address"] = address
+				customerData["address"] = gin.H{
+					"flat":  customer.Flat,
+					"house": customer.House,
+					"road":  customer.Road,
+					"block": customer.Block,
+					"area":  customer.Area,
+				}
 			}
 
 			processedCustomers = append(processedCustomers, customerData)
