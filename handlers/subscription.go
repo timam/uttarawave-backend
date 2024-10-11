@@ -9,6 +9,7 @@ import (
 	"github.com/timam/uttarawave-backend/repositories"
 	"go.uber.org/zap"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -193,17 +194,27 @@ func (h *subscriptionHandler) DeleteSubscription() gin.HandlerFunc {
 
 func (h *subscriptionHandler) GetAllSubscriptions() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		subscriptions, err := h.repo.GetAllSubscriptions(c.Request.Context())
+		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+		pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "50"))
+
+		subscriptions, totalCount, err := h.repo.GetSubscriptionsPaginated(c.Request.Context(), page, pageSize)
 		if err != nil {
-			logger.Error("Failed to get all subscriptions", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get all subscriptions"})
+			logger.Error("Failed to get subscriptions", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get subscriptions"})
 			return
 		}
 
-		c.JSON(http.StatusOK, subscriptions)
+		response := gin.H{
+			"subscriptions": subscriptions,
+			"totalCount":    totalCount,
+			"page":          page,
+			"pageSize":      pageSize,
+		}
+
+		logger.Info("Retrieved subscriptions", zap.Int("count", len(subscriptions)), zap.Int("page", page), zap.Int("pageSize", pageSize))
+		c.JSON(http.StatusOK, response)
 	}
 }
-
 func (h *subscriptionHandler) ProcessExpiredSubscriptions() {
 	ctx := context.Background()
 	expiredSubscriptions, err := h.repo.GetExpiredSubscriptions(ctx)

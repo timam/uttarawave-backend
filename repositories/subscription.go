@@ -13,7 +13,7 @@ type SubscriptionRepository interface {
 	GetSubscriptionsByCustomerID(ctx context.Context, customerID string) ([]models.Subscription, error)
 	UpdateSubscription(ctx context.Context, subscription *models.Subscription) error
 	DeleteSubscription(ctx context.Context, id string) error
-	GetAllSubscriptions(ctx context.Context) ([]models.Subscription, error)
+	GetSubscriptionsPaginated(ctx context.Context, page, pageSize int) ([]models.Subscription, int64, error)
 	GetExpiredSubscriptions(ctx context.Context) ([]models.Subscription, error)
 }
 
@@ -47,12 +47,22 @@ func (r *GormSubscriptionRepository) DeleteSubscription(ctx context.Context, id 
 	return db.DB.WithContext(ctx).Delete(&models.Subscription{}, "id = ?", id).Error
 }
 
-func (r *GormSubscriptionRepository) GetAllSubscriptions(ctx context.Context) ([]models.Subscription, error) {
+func (r *GormSubscriptionRepository) GetSubscriptionsPaginated(ctx context.Context, page, pageSize int) ([]models.Subscription, int64, error) {
 	var subscriptions []models.Subscription
-	err := db.DB.WithContext(ctx).Find(&subscriptions).Error
-	return subscriptions, err
-}
+	var totalCount int64
 
+	offset := (page - 1) * pageSize
+
+	if err := db.DB.WithContext(ctx).Model(&models.Subscription{}).Count(&totalCount).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := db.DB.WithContext(ctx).Offset(offset).Limit(pageSize).Find(&subscriptions).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return subscriptions, totalCount, nil
+}
 func (r *GormSubscriptionRepository) GetExpiredSubscriptions(ctx context.Context) ([]models.Subscription, error) {
 	var expiredSubscriptions []models.Subscription
 	err := db.DB.WithContext(ctx).Where("renewal_date <= ? AND status != ?", time.Now(), "Expired").Find(&expiredSubscriptions).Error
