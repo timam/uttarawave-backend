@@ -214,3 +214,27 @@ func (h *deviceHandler) UnassignDevice() gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{"message": "Device unassigned successfully"})
 	}
 }
+
+func (h *deviceHandler) GetDeviceBySubscriptionID() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		subscriptionID := c.Query("subscriptionId")
+		if subscriptionID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Subscription ID is required"})
+			return
+		}
+
+		device, err := h.repo.GetDeviceBySubscriptionID(c.Request.Context(), subscriptionID)
+		if err != nil {
+			logger.Error("Failed to get device by subscription ID", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get device"})
+			return
+		}
+
+		if device == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "No device found for this subscription"})
+			return
+		}
+
+		c.JSON(http.StatusOK, device)
+	}
+}

@@ -77,16 +77,7 @@ func InitRouter() *gin.Engine {
 		deviceRoutes.POST("/:id/assign-to-subscription", deviceHandler.AssignDeviceToSubscription())
 		deviceRoutes.POST("/:id/assign-to-building", deviceHandler.AssignDeviceToBuilding())
 		deviceRoutes.POST("/:id/unassign", deviceHandler.UnassignDevice())
-	}
-
-	customerRepo := repositories.NewGormCustomerRepository()
-	customerHandler := handlers.NewCustomerHandler(customerRepo, buildingRepo)
-	customerRoutes := apiV1.Group("/customers")
-	{
-		customerRoutes.POST("", customerHandler.CreateCustomer())
-		customerRoutes.GET("", customerHandler.GetCustomer())
-		customerRoutes.PUT("/:id", customerHandler.UpdateCustomer())
-		customerRoutes.DELETE("", customerHandler.DeleteCustomer())
+		deviceRoutes.GET("/by-subscription", deviceHandler.GetDeviceBySubscriptionID())
 	}
 
 	subscriptionRepo := repositories.NewGormSubscriptionRepository()
@@ -105,6 +96,17 @@ func InitRouter() *gin.Engine {
 	transactionRoutes := apiV1.Group("/transactions")
 	{
 		transactionRoutes.POST("/cash", transactionHandler.ProcessCashTransaction())
+	}
+
+	customerRepo := repositories.NewGormCustomerRepository()
+	customerHandler := handlers.NewCustomerHandler(customerRepo, buildingRepo, subscriptionRepo, deviceRepo)
+	customerRoutes := apiV1.Group("/customers")
+	{
+		customerRoutes.POST("", customerHandler.CreateCustomer())
+		customerRoutes.GET("", customerHandler.GetCustomer())
+		customerRoutes.PUT("/:id", customerHandler.UpdateCustomer())
+		customerRoutes.DELETE("", customerHandler.DeleteCustomer())
+		customerRoutes.GET("/full-details", customerHandler.GetAllCustomersFullDetails())
 	}
 
 	logger.Info("Router initialized successfully")

@@ -2,8 +2,10 @@ package repositories
 
 import (
 	"context"
+	"errors"
 	"github.com/timam/uttarawave-backend/models"
 	"github.com/timam/uttarawave-backend/pkg/db"
+	"gorm.io/gorm"
 	"time"
 )
 
@@ -19,6 +21,7 @@ type DeviceRepository interface {
 	MarkDeviceForCollection(ctx context.Context, deviceID string) error
 	ReturnDeviceToStock(ctx context.Context, deviceID string) error
 	GetDevicesByStatus(ctx context.Context, status models.DeviceStatus) ([]models.Device, error)
+	GetDeviceBySubscriptionID(ctx context.Context, subscriptionID string) (*models.Device, error)
 }
 
 type GormDeviceRepository struct{}
@@ -105,4 +108,16 @@ func (r *GormDeviceRepository) GetDevicesByStatus(ctx context.Context, status mo
 	var devices []models.Device
 	err := db.DB.WithContext(ctx).Where("status = ?", status).Find(&devices).Error
 	return devices, err
+}
+
+func (r *GormDeviceRepository) GetDeviceBySubscriptionID(ctx context.Context, subscriptionID string) (*models.Device, error) {
+	var device models.Device
+	err := db.DB.WithContext(ctx).Where("subscription_id = ?", subscriptionID).First(&device).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &device, nil
 }
