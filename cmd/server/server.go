@@ -18,11 +18,11 @@ type Server struct {
 	cancel     context.CancelFunc
 }
 
-func InitServer() *Server {
+func InitializeServer() (*Server, error) {
 	router := routers.InitRouter()
 	ctx, cancel := context.WithCancel(context.Background())
 
-	return &Server{
+	server := &Server{
 		httpServer: &http.Server{
 			Addr:    ":" + viper.GetString("server.port"),
 			Handler: router,
@@ -30,6 +30,9 @@ func InitServer() *Server {
 		ctx:    ctx,
 		cancel: cancel,
 	}
+
+	logger.Info("Server initialized successfully")
+	return server, nil
 }
 
 func (s *Server) RunServer() error {
@@ -60,8 +63,14 @@ func (s *Server) ReloadServer() error {
 	}
 	logger.Info("Server exited")
 
-	newServer := InitServer()
-	go newServer.RunServer()
+	newServer, err := InitializeServer()
+	if err != nil {
+		return fmt.Errorf("failed to initialize new server: %w", err)
+	}
+
+	if err := newServer.RunServer(); err != nil {
+		return fmt.Errorf("failed to run new server: %w", err)
+	}
 
 	*s = *newServer
 	return nil
@@ -69,5 +78,7 @@ func (s *Server) ReloadServer() error {
 
 func (s *Server) ShutdownServer() error {
 	s.cancel()
-	return s.GracefulShutdown()
+	err := s.GracefulShutdown()
+	logger.SyncLogger()
+	return err
 }

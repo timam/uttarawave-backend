@@ -88,8 +88,12 @@ func loadIndividualConfig(path string) error {
 					logger.Info("Reloaded config", zap.String("key", key), zap.String("value", vip.GetString(key)))
 				}
 				logger.Info("Server configuration changed, reloading server")
+
 				if serverInstance == nil {
-					serverInstance = server.InitServer()
+					serverInstance, err = server.InitializeServer()
+					if err != nil {
+						logger.Error("Error initializing server", zap.String("file", path), zap.Error(err))
+					}
 					go serverInstance.RunServer()
 				} else {
 					if err := serverInstance.ReloadServer(); err != nil {

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/timam/uttarawave-backend/cmd/server"
 	"github.com/timam/uttarawave-backend/internals/configs"
 	"github.com/timam/uttarawave-backend/pkg/db"
@@ -44,35 +45,41 @@ func init() {
 	logger.Info("Tracing initialized successfully")
 }
 
-func main() {
-	// Create a new server instance
-	serverInstance := server.InitServer()
+func run() error {
+	serverInstance, err := server.InitializeServer()
+	if err != nil {
+		return fmt.Errorf("server initialization failed: %w", err)
+	}
+	logger.Info("Server initialized successfully")
 
-	// Start server in a goroutine
+	errChan := make(chan error, 1)
 	go func() {
-		if err := serverInstance.RunServer(); err != nil {
-			logger.Error("Server failed to start", zap.Error(err))
-		}
+		errChan <- serverInstance.RunServer()
 	}()
 
-	// Set up signal handling
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
-	// Wait for interrupt signal
-	sig := <-sigChan
-	logger.Warn("Received signal", zap.String("signal", sig.String()))
+	select {
+	case err := <-errChan:
+		if err != nil {
+			return fmt.Errorf("server error: %w", err)
+		}
+	case sig := <-sigChan:
+		logger.Warn("Received signal", zap.String("signal", sig.String()))
+	}
 
-	// Shutdown server
 	if err := serverInstance.ShutdownServer(); err != nil {
 		logger.Error("Server forced to shutdown", zap.Error(err))
 	} else {
 		logger.Info("Server exited gracefully")
 	}
 
-	// Sync logger
-	logger.SyncLogger()
+	return nil
+}
 
-	// Exit
-	os.Exit(0)
+func main() {
+	if err := run(); err != nil {
+		logger.Fatal("Failed to run the application", zap.Error(err))
+	}
 }
