@@ -12,6 +12,8 @@ import (
 	"strings"
 )
 
+var serverInstance *server.Server
+
 func InitializeConfig() error {
 	configDir := "./config/"
 
@@ -86,7 +88,14 @@ func loadIndividualConfig(path string) error {
 					logger.Info("Reloaded config", zap.String("key", key), zap.String("value", vip.GetString(key)))
 				}
 				logger.Info("Server configuration changed, reloading server")
-				server.ReloadServer()
+				if serverInstance == nil {
+					serverInstance = server.InitServer()
+					go serverInstance.RunServer()
+				} else {
+					if err := serverInstance.ReloadServer(); err != nil {
+						logger.Error("Failed to reload server", zap.Error(err))
+					}
+				}
 				currentServerConfig = newServerConfig // Update the stored config
 			} else {
 				logger.Info("No change in server-relevant configuration, no need to reload server")

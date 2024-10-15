@@ -45,8 +45,15 @@ func init() {
 }
 
 func main() {
+	// Create a new server instance
+	serverInstance := server.InitServer()
+
 	// Start server in a goroutine
-	go server.StartServer()
+	go func() {
+		if err := serverInstance.RunServer(); err != nil {
+			logger.Error("Server failed to start", zap.Error(err))
+		}
+	}()
 
 	// Set up signal handling
 	sigChan := make(chan os.Signal, 1)
@@ -57,7 +64,7 @@ func main() {
 	logger.Warn("Received signal", zap.String("signal", sig.String()))
 
 	// Shutdown server
-	if err := server.ShutdownServer(); err != nil {
+	if err := serverInstance.ShutdownServer(); err != nil {
 		logger.Error("Server forced to shutdown", zap.Error(err))
 	} else {
 		logger.Info("Server exited gracefully")

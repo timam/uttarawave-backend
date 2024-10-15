@@ -2,8 +2,8 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/spf13/viper"
@@ -12,78 +12,62 @@ import (
 	"go.uber.org/zap"
 )
 
-var (
-	server       *http.Server
-	serverCtx    context.Context
-	serverCancel context.CancelFunc
-	mu           sync.Mutex
-)
-
-func initServerContext() {
-	mu.Lock()
-	defer mu.Unlock()
-	serverCtx, serverCancel = context.WithCancel(context.Background())
+type Server struct {
+	httpServer *http.Server
+	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
-func startServer() *http.Server {
+func InitServer() *Server {
 	router := routers.InitRouter()
-	return &http.Server{
-		Addr:    ":" + viper.GetString("server.port"),
-		Handler: router,
+	ctx, cancel := context.WithCancel(context.Background())
+
+	return &Server{
+		httpServer: &http.Server{
+			Addr:    ":" + viper.GetString("server.port"),
+			Handler: router,
+		},
+		ctx:    ctx,
+		cancel: cancel,
 	}
 }
 
-func StartServer() {
-	initServerContext()
-	server = startServer()
-	logger.Info("Server started on " + server.Addr)
+func (s *Server) RunServer() error {
+	logger.Info("Server starting on " + s.httpServer.Addr)
 
 	go func() {
-		<-serverCtx.Done()
-		if err := server.Shutdown(context.Background()); err != nil {
+		<-s.ctx.Done()
+		if err := s.GracefulShutdown(); err != nil {
 			logger.Error("Server shutdown error", zap.Error(err))
 		}
 	}()
 
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		logger.Error("Failed to start server", zap.Error(err))
-	}
-}
-
-func ReloadServer() {
-	mu.Lock()
-	defer mu.Unlock()
-
-	// Cancel the existing server context
-	if serverCancel != nil {
-		serverCancel()
-	}
-
-	// Create a new context for the new server instance
-	serverCtx, serverCancel = context.WithCancel(context.Background())
-
-	if server != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		if err := server.Shutdown(ctx); err != nil {
-			logger.Error("Failed to gracefully shutdown the server", zap.Error(err))
-		}
-		logger.Info("Server exited")
-	}
-
-	// Start the new server instance
-	go StartServer()
-}
-
-func ShutdownServer() error {
-	mu.Lock()
-	defer mu.Unlock()
-
-	if server != nil && serverCancel != nil {
-		serverCancel() // Cancel the server context
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-		return server.Shutdown(ctx)
+	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		return fmt.Errorf("failed to start server: %w", err)
 	}
 	return nil
+}
+
+func (s *Server) GracefulShutdown() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	return s.httpServer.Shutdown(ctx)
+}
+
+func (s *Server) ReloadServer() error {
+	if err := s.GracefulShutdown(); err != nil {
+		return fmt.Errorf("failed to gracefully shutdown the server: %w", err)
+	}
+	logger.Info("Server exited")
+
+	newServer := InitServer()
+	go newServer.RunServer()
+
+	*s = *newServer
+	return nil
+}
+
+func (s *Server) ShutdownServer() error {
+	s.cancel()
+	return s.GracefulShutdown()
 }
