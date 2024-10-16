@@ -79,8 +79,14 @@ func run() error {
 	return nil
 }
 
+func migrate() error {
+	logger.Info("TODO: Implement database migration!!")
+	return nil
+}
+
 func main() {
 	cmd.Run = run
+	cmd.Migrate = migrate
 
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)
