@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/timam/uttarawave-backend/cmd"
 	"github.com/timam/uttarawave-backend/cmd/server"
 	"github.com/timam/uttarawave-backend/internals/configs"
 	"github.com/timam/uttarawave-backend/pkg/db"
@@ -79,7 +80,10 @@ func run() error {
 }
 
 func main() {
-	if err := run(); err != nil {
-		logger.Fatal("Failed to run the application", zap.Error(err))
+	cmd.Run = run
+
+	if err := cmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
