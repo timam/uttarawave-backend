@@ -21,7 +21,7 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(runCmd)
+	rootCmd.AddCommand(serveCmd)
 	rootCmd.AddCommand(migrateCmd)
 }
 
@@ -41,15 +41,15 @@ func displayBanner() {
 Uttarawave Backend Application
 ======================================================
 Available commands:
-  run     : Serve the backend server
+  serve   : Serve the backend server
   migrate : Run database migrations 
 ======================================================
 `
 	fmt.Println(banner)
 }
 
-var runCmd = &cobra.Command{
-	Use:   "run",
+var serveCmd = &cobra.Command{
+	Use:   "serve",
 	Short: "Serve the Uttarawave backend server",
 	Long:  `This command starts uttarawave backend server.`,
 	Run: func(cmd *cobra.Command, args []string) {
