@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-var Run func() error
+var Serve func() error
 var Migrate func() error
 
 var rootCmd = &cobra.Command{
@@ -41,7 +41,7 @@ func displayBanner() {
 Uttarawave Backend Application
 ======================================================
 Available commands:
-  run     : Run the backend server
+  run     : Serve the backend server
   migrate : Run database migrations 
 ======================================================
 `
@@ -50,10 +50,10 @@ Available commands:
 
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Run the Uttarawave backend server",
-	Long:  `This command starts the Uttarawave backend server.`,
+	Short: "Serve the Uttarawave backend server",
+	Long:  `This command starts uttarawave backend server.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		if err := Run(); err != nil {
+		if err := Serve(); err != nil {
 			logger.Fatal("Failed to run the application", zap.Error(err))
 		}
 	},
@@ -61,8 +61,8 @@ var runCmd = &cobra.Command{
 
 var migrateCmd = &cobra.Command{
 	Use:   "migrate",
-	Short: "Run database migration for Uttarawave backend server",
-	Long:  `This command migrates database of Uttarawave backend server.`,
+	Short: "Run database migration for uttarawave backend server",
+	Long:  `This command migrates database of uttarawave backend server.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		if err := Migrate(); err != nil {
 			logger.Fatal("Failed to run the application", zap.Error(err))

@@ -46,7 +46,7 @@ func init() {
 	logger.Info("Tracing initialized successfully")
 }
 
-func run() error {
+func serve() error {
 	serverInstance, err := server.InitializeServer()
 	if err != nil {
 		return fmt.Errorf("server initialization failed: %w", err)
@@ -85,7 +85,7 @@ func migrate() error {
 }
 
 func main() {
-	cmd.Run = run
+	cmd.Serve = serve
 	cmd.Migrate = migrate
 
 	if err := cmd.Execute(); err != nil {
