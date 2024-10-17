@@ -68,9 +68,9 @@ Cable TV Packages' Test Cases:
    Then the system informs them they don't have permission to perform this action
    
 8. Given an admin or employee wants to view details of a specific CableTV package
-When they select a package to view
-Then the system displays the complete details of the selected package
+   When they select a package to view
+   Then the system displays the complete details of the selected package
    
 9. Given an admin or employee wants to view all CableTV packages
-When they access the package listing feature
-Then the system displays a list of all available CableTV packages
+   When they access the package listing feature
+   Then the system displays a list of all available CableTV packages
