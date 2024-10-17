@@ -89,7 +89,7 @@ func main() {
 	cmd.Migrate = migrate
 
 	if err := cmd.Execute(); err != nil {
-		fmt.Println(err)
+		logger.Error("Failed to execute", zap.Error(err))
 		os.Exit(1)
 	}
 }
