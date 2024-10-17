@@ -10,17 +10,17 @@ import (
 	"net/http"
 )
 
-type buildingHandler struct {
+type BuildingHandler struct {
 	repo repositories.BuildingRepository
 }
 
-func NewBuildingHandler() *buildingHandler {
-	return &buildingHandler{
+func NewBuildingHandler() *BuildingHandler {
+	return &BuildingHandler{
 		repo: repositories.NewGormBuildingRepository(),
 	}
 }
 
-func (h *buildingHandler) AddBuilding() gin.HandlerFunc {
+func (h *BuildingHandler) AddBuilding() gin.HandlerFunc {
 	//TODO: Prevent duplicate building creation
 	return func(c *gin.Context) {
 		var building models.Building
@@ -59,7 +59,7 @@ func (h *buildingHandler) AddBuilding() gin.HandlerFunc {
 	}
 }
 
-func (h *buildingHandler) DeleteBuilding() gin.HandlerFunc {
+func (h *BuildingHandler) DeleteBuilding() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
@@ -80,7 +80,7 @@ func (h *buildingHandler) DeleteBuilding() gin.HandlerFunc {
 	}
 }
 
-func (h *buildingHandler) UpdateBuilding() gin.HandlerFunc {
+func (h *BuildingHandler) UpdateBuilding() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		if id == "" {
@@ -107,7 +107,7 @@ func (h *buildingHandler) UpdateBuilding() gin.HandlerFunc {
 	}
 }
 
-func (h *buildingHandler) GetBuilding() gin.HandlerFunc {
+func (h *BuildingHandler) GetBuilding() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		if id == "" {
@@ -131,7 +131,7 @@ func (h *buildingHandler) GetBuilding() gin.HandlerFunc {
 	}
 }
 
-func (h *buildingHandler) GetAllBuildings() gin.HandlerFunc {
+func (h *BuildingHandler) GetAllBuildings() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		buildings, err := h.repo.GetAllBuildings(c.Request.Context())
 		if err != nil {

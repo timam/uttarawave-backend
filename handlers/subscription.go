@@ -13,14 +13,17 @@ import (
 	"time"
 )
 
-type subscriptionHandler struct {
+type SubscriptionHandler struct {
 	repo        repositories.SubscriptionRepository
 	packageRepo repositories.PackageRepository
 	deviceRepo  repositories.DeviceRepository
 }
 
-func NewSubscriptionHandler(repo repositories.SubscriptionRepository, packageRepo repositories.PackageRepository, deviceRepo repositories.DeviceRepository) *subscriptionHandler {
-	return &subscriptionHandler{
+func NewSubscriptionHandler(
+	repo repositories.SubscriptionRepository,
+	packageRepo repositories.PackageRepository,
+	deviceRepo repositories.DeviceRepository) *SubscriptionHandler {
+	return &SubscriptionHandler{
 		repo:        repo,
 		packageRepo: packageRepo,
 		deviceRepo:  deviceRepo,
@@ -33,7 +36,7 @@ func getFirstDayOfNextMonth(date time.Time) time.Time {
 	return firstOfNextMonth
 }
 
-func (h *subscriptionHandler) CreateSubscription() gin.HandlerFunc {
+func (h *SubscriptionHandler) CreateSubscription() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var subscription models.Subscription
 
@@ -102,7 +105,7 @@ func (h *subscriptionHandler) CreateSubscription() gin.HandlerFunc {
 	}
 }
 
-func (h *subscriptionHandler) GetSubscription() gin.HandlerFunc {
+func (h *SubscriptionHandler) GetSubscription() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		if id == "" {
@@ -126,7 +129,7 @@ func (h *subscriptionHandler) GetSubscription() gin.HandlerFunc {
 	}
 }
 
-func (h *subscriptionHandler) UpdateSubscription() gin.HandlerFunc {
+func (h *SubscriptionHandler) UpdateSubscription() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		if id == "" {
@@ -173,7 +176,7 @@ func (h *subscriptionHandler) UpdateSubscription() gin.HandlerFunc {
 	}
 }
 
-func (h *subscriptionHandler) DeleteSubscription() gin.HandlerFunc {
+func (h *SubscriptionHandler) DeleteSubscription() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		if id == "" {
@@ -192,7 +195,7 @@ func (h *subscriptionHandler) DeleteSubscription() gin.HandlerFunc {
 	}
 }
 
-func (h *subscriptionHandler) GetAllSubscriptions() gin.HandlerFunc {
+func (h *SubscriptionHandler) GetAllSubscriptions() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 		pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "50"))
@@ -215,7 +218,7 @@ func (h *subscriptionHandler) GetAllSubscriptions() gin.HandlerFunc {
 		c.JSON(http.StatusOK, response)
 	}
 }
-func (h *subscriptionHandler) ProcessExpiredSubscriptions() {
+func (h *SubscriptionHandler) ProcessExpiredSubscriptions() {
 	ctx := context.Background()
 	expiredSubscriptions, err := h.repo.GetExpiredSubscriptions(ctx)
 	if err != nil {

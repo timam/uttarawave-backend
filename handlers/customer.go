@@ -13,15 +13,19 @@ import (
 	"go.uber.org/zap"
 )
 
-type customerHandler struct {
+type CustomerHandler struct {
 	repo             repositories.CustomerRepository
 	buildingRepo     repositories.BuildingRepository
 	subscriptionRepo repositories.SubscriptionRepository
 	deviceRepo       repositories.DeviceRepository
 }
 
-func NewCustomerHandler(cr repositories.CustomerRepository, br repositories.BuildingRepository, sr repositories.SubscriptionRepository, dr repositories.DeviceRepository) *customerHandler {
-	return &customerHandler{
+func NewCustomerHandler(
+	cr repositories.CustomerRepository,
+	br repositories.BuildingRepository,
+	sr repositories.SubscriptionRepository,
+	dr repositories.DeviceRepository) *CustomerHandler {
+	return &CustomerHandler{
 		repo:             cr,
 		buildingRepo:     br,
 		subscriptionRepo: sr,
@@ -33,7 +37,7 @@ func generateUniqueID() string {
 	return uuid.New().String()
 }
 
-func (h *customerHandler) CreateCustomer() gin.HandlerFunc {
+func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var customer models.Customer
 
@@ -105,7 +109,7 @@ func (h *customerHandler) CreateCustomer() gin.HandlerFunc {
 	}
 }
 
-func (h *customerHandler) GetCustomer() gin.HandlerFunc {
+func (h *CustomerHandler) GetCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		mobile := c.Query("mobile")
 
@@ -160,7 +164,7 @@ func (h *customerHandler) GetCustomer() gin.HandlerFunc {
 	}
 }
 
-func (h *customerHandler) GetAllCustomers() gin.HandlerFunc {
+func (h *CustomerHandler) GetAllCustomers() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 		pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "50"))
@@ -218,7 +222,7 @@ func (h *customerHandler) GetAllCustomers() gin.HandlerFunc {
 	}
 }
 
-func (h *customerHandler) UpdateCustomer() gin.HandlerFunc {
+func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		logger.Info("UpdateCustomer called", zap.String("id", id))
@@ -293,7 +297,7 @@ func (h *customerHandler) UpdateCustomer() gin.HandlerFunc {
 	}
 }
 
-func (h *customerHandler) DeleteCustomer() gin.HandlerFunc {
+func (h *CustomerHandler) DeleteCustomer() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		mobile := c.Query("mobile")
 
@@ -323,7 +327,7 @@ func (h *customerHandler) DeleteCustomer() gin.HandlerFunc {
 	}
 }
 
-func (h *customerHandler) GetAllCustomersFullDetails() gin.HandlerFunc {
+func (h *CustomerHandler) GetAllCustomersFullDetails() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 		pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "50"))

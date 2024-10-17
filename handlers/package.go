@@ -10,17 +10,17 @@ import (
 	"net/http"
 )
 
-type packageHandler struct {
+type PackageHandler struct {
 	repo repositories.PackageRepository
 }
 
-func NewPackageHandler(repo repositories.PackageRepository) *packageHandler {
-	return &packageHandler{
+func NewPackageHandler(repo repositories.PackageRepository) *PackageHandler {
+	return &PackageHandler{
 		repo: repo,
 	}
 }
 
-func (h *packageHandler) CreateInternetPackage() gin.HandlerFunc {
+func (h *PackageHandler) CreateInternetPackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var pkg models.InternetPackage
 		if err := c.ShouldBindJSON(&pkg); err != nil {
@@ -41,7 +41,7 @@ func (h *packageHandler) CreateInternetPackage() gin.HandlerFunc {
 	}
 }
 
-func (h *packageHandler) UpdateInternetPackage() gin.HandlerFunc {
+func (h *PackageHandler) UpdateInternetPackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		var pkg models.InternetPackage
@@ -63,7 +63,7 @@ func (h *packageHandler) UpdateInternetPackage() gin.HandlerFunc {
 	}
 }
 
-func (h *packageHandler) DeleteInternetPackage() gin.HandlerFunc {
+func (h *PackageHandler) DeleteInternetPackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		err := h.repo.DeleteInternetPackage(c.Request.Context(), id)
@@ -77,7 +77,7 @@ func (h *packageHandler) DeleteInternetPackage() gin.HandlerFunc {
 	}
 }
 
-func (h *packageHandler) GetInternetPackage() gin.HandlerFunc {
+func (h *PackageHandler) GetInternetPackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		pkg, err := h.repo.GetInternetPackageByID(c.Request.Context(), id)
@@ -91,7 +91,7 @@ func (h *packageHandler) GetInternetPackage() gin.HandlerFunc {
 	}
 }
 
-func (h *packageHandler) GetAllInternetPackages() gin.HandlerFunc {
+func (h *PackageHandler) GetAllInternetPackages() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		packages, err := h.repo.GetAllInternetPackages(c.Request.Context())
 		if err != nil {
@@ -104,7 +104,7 @@ func (h *packageHandler) GetAllInternetPackages() gin.HandlerFunc {
 	}
 }
 
-func (h *packageHandler) CreateCableTVPackage() gin.HandlerFunc {
+func (h *PackageHandler) CreateCableTVPackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var pkg models.CableTVPackage
 		if err := c.ShouldBindJSON(&pkg); err != nil {
@@ -125,7 +125,7 @@ func (h *packageHandler) CreateCableTVPackage() gin.HandlerFunc {
 	}
 }
 
-func (h *packageHandler) UpdateCableTVPackage() gin.HandlerFunc {
+func (h *PackageHandler) UpdateCableTVPackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		var pkg models.CableTVPackage
@@ -147,7 +147,7 @@ func (h *packageHandler) UpdateCableTVPackage() gin.HandlerFunc {
 	}
 }
 
-func (h *packageHandler) DeleteCableTVPackage() gin.HandlerFunc {
+func (h *PackageHandler) DeleteCableTVPackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		err := h.repo.DeleteCableTVPackage(c.Request.Context(), id)
@@ -161,7 +161,7 @@ func (h *packageHandler) DeleteCableTVPackage() gin.HandlerFunc {
 	}
 }
 
-func (h *packageHandler) GetCableTVPackage() gin.HandlerFunc {
+func (h *PackageHandler) GetCableTVPackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		pkg, err := h.repo.GetCableTVPackageByID(c.Request.Context(), id)
@@ -175,7 +175,7 @@ func (h *packageHandler) GetCableTVPackage() gin.HandlerFunc {
 	}
 }
 
-func (h *packageHandler) GetAllCableTVPackages() gin.HandlerFunc {
+func (h *PackageHandler) GetAllCableTVPackages() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		packages, err := h.repo.GetAllCableTVPackages(c.Request.Context())
 		if err != nil {

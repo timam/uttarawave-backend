@@ -12,19 +12,19 @@ import (
 	"time"
 )
 
-type transactionHandler struct {
+type TransactionHandler struct {
 	transactionRepo  repositories.TransactionRepository
 	subscriptionRepo repositories.SubscriptionRepository
 }
 
-func NewTransactionHandler(tr repositories.TransactionRepository, sr repositories.SubscriptionRepository) *transactionHandler {
-	return &transactionHandler{
+func NewTransactionHandler(tr repositories.TransactionRepository, sr repositories.SubscriptionRepository) *TransactionHandler {
+	return &TransactionHandler{
 		transactionRepo:  tr,
 		subscriptionRepo: sr,
 	}
 }
 
-func (h *transactionHandler) ProcessCashTransaction() gin.HandlerFunc {
+func (h *TransactionHandler) ProcessCashTransaction() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var transactionInfo struct {
 			SubscriptionID string  `json:"subscriptionId"`

@@ -11,19 +11,19 @@ import (
 	"time"
 )
 
-type deviceHandler struct {
+type DeviceHandler struct {
 	repo         repositories.DeviceRepository
 	buildingRepo repositories.BuildingRepository
 }
 
-func NewDeviceHandler(repo repositories.DeviceRepository, buildingRepo repositories.BuildingRepository) *deviceHandler {
-	return &deviceHandler{
+func NewDeviceHandler(repo repositories.DeviceRepository, buildingRepo repositories.BuildingRepository) *DeviceHandler {
+	return &DeviceHandler{
 		repo:         repo,
 		buildingRepo: buildingRepo,
 	}
 }
 
-func (h *deviceHandler) CreateDevice() gin.HandlerFunc {
+func (h *DeviceHandler) CreateDevice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var device models.Device
 		if err := c.ShouldBindJSON(&device); err != nil {
@@ -69,7 +69,7 @@ func (h *deviceHandler) CreateDevice() gin.HandlerFunc {
 		c.JSON(http.StatusCreated, gin.H{"message": "Device created successfully", "device": device})
 	}
 }
-func (h *deviceHandler) GetDevice() gin.HandlerFunc {
+func (h *DeviceHandler) GetDevice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		device, err := h.repo.GetDeviceByID(c.Request.Context(), id)
@@ -83,7 +83,7 @@ func (h *deviceHandler) GetDevice() gin.HandlerFunc {
 	}
 }
 
-func (h *deviceHandler) UpdateDevice() gin.HandlerFunc {
+func (h *DeviceHandler) UpdateDevice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		var updatedDevice models.Device
@@ -119,7 +119,7 @@ func (h *deviceHandler) UpdateDevice() gin.HandlerFunc {
 	}
 }
 
-func (h *deviceHandler) DeleteDevice() gin.HandlerFunc {
+func (h *DeviceHandler) DeleteDevice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		err := h.repo.DeleteDevice(c.Request.Context(), id)
@@ -133,7 +133,7 @@ func (h *deviceHandler) DeleteDevice() gin.HandlerFunc {
 	}
 }
 
-func (h *deviceHandler) GetAllDevices() gin.HandlerFunc {
+func (h *DeviceHandler) GetAllDevices() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		devices, err := h.repo.GetAllDevices(c.Request.Context())
 		if err != nil {
@@ -146,7 +146,7 @@ func (h *deviceHandler) GetAllDevices() gin.HandlerFunc {
 	}
 }
 
-func (h *deviceHandler) AssignDeviceToSubscription() gin.HandlerFunc {
+func (h *DeviceHandler) AssignDeviceToSubscription() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		deviceID := c.Param("id")
 		var request struct {
@@ -173,7 +173,7 @@ func (h *deviceHandler) AssignDeviceToSubscription() gin.HandlerFunc {
 	}
 }
 
-func (h *deviceHandler) AssignDeviceToBuilding() gin.HandlerFunc {
+func (h *DeviceHandler) AssignDeviceToBuilding() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		deviceID := c.Param("id")
 		var request struct {
@@ -200,7 +200,7 @@ func (h *deviceHandler) AssignDeviceToBuilding() gin.HandlerFunc {
 	}
 }
 
-func (h *deviceHandler) UnassignDevice() gin.HandlerFunc {
+func (h *DeviceHandler) UnassignDevice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		deviceID := c.Param("id")
 
@@ -215,7 +215,7 @@ func (h *deviceHandler) UnassignDevice() gin.HandlerFunc {
 	}
 }
 
-func (h *deviceHandler) GetDeviceBySubscriptionID() gin.HandlerFunc {
+func (h *DeviceHandler) GetDeviceBySubscriptionID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		subscriptionID := c.Query("subscriptionId")
 		if subscriptionID == "" {
