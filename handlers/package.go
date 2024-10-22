@@ -59,7 +59,44 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 			return
 		}
 
-		response.Success(c, http.StatusCreated, "Package created successfully", pkg)
+		var responseData interface{}
+		switch pkg.Type {
+		case models.CableTVPackage:
+			responseData = response.NewTVPackageResponse(&pkg)
+		case models.InternetPackage:
+			responseData = response.NewInternetPackageResponse(&pkg)
+		}
+
+		response.Success(c, http.StatusCreated, "Package created successfully", responseData)
+	}
+}
+
+func (h *PackageHandler) GetAllPackages() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		packageType := c.Query("type")
+
+		packages, err := h.repo.GetAllPackages(c.Request.Context(), packageType)
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, "Failed to fetch packages", err.Error())
+			return
+		}
+
+		if packageType == string(models.CableTVPackage) {
+			tvPackages := make([]response.TVPackageResponse, len(packages))
+			for i, pkg := range packages {
+				tvPackages[i] = response.NewTVPackageResponse(&pkg)
+			}
+			response.Success(c, http.StatusOK, "TV packages retrieved successfully", tvPackages)
+		} else if packageType == string(models.InternetPackage) {
+			internetPackages := make([]response.InternetPackageResponse, len(packages))
+			for i, pkg := range packages {
+				internetPackages[i] = response.NewInternetPackageResponse(&pkg)
+			}
+			response.Success(c, http.StatusOK, "Internet packages retrieved successfully", internetPackages)
+		} else {
+			// If no specific type is requested, return all packages
+			response.Success(c, http.StatusOK, "Packages retrieved successfully", packages)
+		}
 	}
 }
 
@@ -97,28 +134,6 @@ func (h *PackageHandler) GetPackageByID() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, pkg)
-	}
-}
-
-func (h *PackageHandler) GetAllPackages() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		packageType := c.Query("type")
-
-		packages, err := h.repo.GetAllPackages(c.Request.Context(), packageType)
-		if err != nil {
-			response.Error(c, http.StatusInternalServerError, "Failed to fetch packages", err.Error())
-			return
-		}
-
-		if packageType == string(models.CableTVPackage) {
-			tvPackages := make([]response.TVPackageResponse, 0)
-			for _, pkg := range packages {
-				tvPackages = append(tvPackages, response.NewTVPackageResponse(&pkg))
-			}
-			response.Success(c, http.StatusOK, "TV packages retrieved successfully", tvPackages)
-		} else {
-			response.Success(c, http.StatusOK, "Packages retrieved successfully", packages)
-		}
 	}
 }
 
