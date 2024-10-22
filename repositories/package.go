@@ -10,7 +10,6 @@ type PackageRepository interface {
 	CreatePackage(ctx context.Context, pkg *models.Package) error
 	GetPackageByID(ctx context.Context, id string) (*models.Package, error)
 	GetAllPackages(ctx context.Context, packageType string) ([]models.Package, error)
-	UpdatePackage(ctx context.Context, pkg *models.Package) error
 	DeletePackage(ctx context.Context, id string) error
 }
 
@@ -46,10 +45,6 @@ func (r *GormPackageRepository) GetAllPackages(ctx context.Context, packageType 
 		return nil, err
 	}
 	return packages, nil
-}
-
-func (r *GormPackageRepository) UpdatePackage(ctx context.Context, pkg *models.Package) error {
-	return db.DB.WithContext(ctx).Save(pkg).Error
 }
 
 func (r *GormPackageRepository) DeletePackage(ctx context.Context, id string) error {

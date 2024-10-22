@@ -122,35 +122,22 @@ func (h *PackageHandler) GetPackageByID() gin.HandlerFunc {
 	}
 }
 
-func (h *PackageHandler) UpdatePackage() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		var pkg models.Package
-		if err := c.ShouldBindJSON(&pkg); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		pkg.ID = id
-		err := h.repo.UpdatePackage(c.Request.Context(), &pkg)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update package"})
-			return
-		}
-
-		c.JSON(http.StatusOK, pkg)
-	}
-}
-
 func (h *PackageHandler) DeletePackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		err := h.repo.DeletePackage(c.Request.Context(), id)
+
+		_, err := h.repo.GetPackageByID(c.Request.Context(), id)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete package"})
+			response.Error(c, http.StatusNotFound, "Package not found", err.Error())
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Package deleted successfully"})
+		err = h.repo.DeletePackage(c.Request.Context(), id)
+		if err != nil {
+			response.Error(c, http.StatusInternalServerError, "Failed to delete package", err.Error())
+			return
+		}
+
+		response.Success(c, http.StatusOK, "Package deleted successfully", nil)
 	}
 }
