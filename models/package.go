@@ -26,14 +26,18 @@ const (
 
 type Package struct {
 	ID              string          `gorm:"primaryKey" json:"id"`
-	Name            string          `gorm:"type:varchar(100)" json:"name"`
 	Type            PackageType     `json:"type"`
-	Speed           int             `json:"speed,omitempty"` // For Internet packages
+	Name            string          `gorm:"type:varchar(100)" json:"name"`
 	Price           float64         `json:"price"`
-	ConnectionType  string          `gorm:"type:varchar(50)" json:"connectionType,omitempty"` // For Internet packages
-	ConnectionClass ConnectionClass `json:"connectionClass,omitempty"`                        // For Internet packages
-	BandwidthType   BandwidthType   `json:"bandwidthType,omitempty"`                          // For Internet packages
-	ChannelLineup   string          `gorm:"type:text" json:"channelLineup,omitempty"`         // For Cable TV packages
-	CreatedAt       time.Time       `gorm:"autoCreateTime" json:"createdAt"`
-	UpdatedAt       time.Time       `gorm:"autoUpdateTime" json:"updatedAt"`
+	IsActive        bool            `json:"isActive"`
+	ConnectionClass ConnectionClass `json:"connectionClass"`
+
+	Bandwidth     int           `json:"bandwidth"` // Changed from "speed" to "bandwidth"
+	BandwidthType BandwidthType `json:"bandwidthType"`
+	HasRealIP     bool          `json:"hasRealIP"`
+
+	ChannelCount int       `json:"channelCount,omitempty"`
+	TVCount      int       `json:"tvCount,omitempty"`
+	CreatedAt    time.Time `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt    time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }
