@@ -42,59 +42,27 @@ func getFirstDayOfNextMonth(date time.Time) time.Time {
 func (h *SubscriptionHandler) CreateSubscription() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var subscription models.Subscription
-
 		if err := c.ShouldBindJSON(&subscription); err != nil {
-			logger.Error("Failed to bind JSON", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		if subscription.CustomerID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "CustomerID is required"})
-			return
-		}
-
 		// Validate package
-		var pkg interface{}
-		var err error
-		if subscription.Type == models.Internet {
-			pkg, err = h.packageRepo.GetInternetPackageByID(c.Request.Context(), subscription.PackageID)
-		} else if subscription.Type == models.CableTV {
-			pkg, err = h.packageRepo.GetCableTVPackageByID(c.Request.Context(), subscription.PackageID)
-		} else {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid subscription type"})
-			return
-		}
-
+		pkg, err := h.packageRepo.GetPackageByID(c.Request.Context(), subscription.PackageID)
 		if err != nil {
 			logger.Error("Failed to get package", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid package ID"})
 			return
 		}
 
-		// Set package details
-		if internetPkg, ok := pkg.(*models.InternetPackage); ok {
-			subscription.PackageName = internetPkg.PackageName
-			subscription.PackagePrice = internetPkg.Price
-		} else if cableTVPkg, ok := pkg.(*models.CableTVPackage); ok {
-			subscription.PackageName = cableTVPkg.PackageName
-			subscription.PackagePrice = cableTVPkg.Price
-		}
-
-		// Generate a unique ID for the subscription
+		// Set subscription details
 		subscription.ID = uuid.New().String()
-
-		// Set StartDate to current time
+		subscription.PackagePrice = pkg.Price
+		subscription.Status = "Active"
 		subscription.StartDate = time.Now()
-
-		// Set RenewalDate to the first day of next month
 		subscription.RenewalDate = getFirstDayOfNextMonth(subscription.StartDate)
-
-		// Set PaidUntil to StartDate (assuming no payment has been made yet)
 		subscription.PaidUntil = subscription.StartDate
-
-		// Initialize DueAmount to 0
-		subscription.DueAmount = 0
+		subscription.DueAmount = strconv.FormatFloat(pkg.Price, 'f', 2, 64)
 
 		err = h.repo.CreateSubscription(c.Request.Context(), &subscription)
 		if err != nil {
@@ -103,11 +71,9 @@ func (h *SubscriptionHandler) CreateSubscription() gin.HandlerFunc {
 			return
 		}
 
-		logger.Info("Subscription created successfully", zap.String("id", subscription.ID))
-		c.JSON(http.StatusCreated, gin.H{"message": "Subscription created successfully", "subscription": subscription})
+		c.JSON(http.StatusCreated, subscription)
 	}
 }
-
 func (h *SubscriptionHandler) GetSubscription() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -142,7 +108,6 @@ func (h *SubscriptionHandler) UpdateSubscription() gin.HandlerFunc {
 
 		var updateData models.Subscription
 		if err := c.ShouldBindJSON(&updateData); err != nil {
-			logger.Error("Failed to bind JSON", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -159,40 +124,27 @@ func (h *SubscriptionHandler) UpdateSubscription() gin.HandlerFunc {
 			return
 		}
 
-		// Update fields
-		existingSubscription.Type = updateData.Type
-		existingSubscription.PackageName = updateData.PackageName
-		existingSubscription.PackagePrice = updateData.PackagePrice
-		existingSubscription.MonthlyDiscount = updateData.MonthlyDiscount
-		existingSubscription.Status = updateData.Status
-		existingSubscription.DeviceID = updateData.DeviceID
-
-		// Update DueAmount and create a new invoice if necessary
-		if updateData.DueAmount > existingSubscription.DueAmount {
-			difference := updateData.DueAmount - existingSubscription.DueAmount
-			existingSubscription.DueAmount = updateData.DueAmount
-
-			invoice := models.Invoice{
-				ID:             uuid.New().String(),
-				CustomerID:     existingSubscription.CustomerID,
-				SubscriptionID: &existingSubscription.ID,
-				Amount:         difference,
-				Status:         models.InvoicePending,
-				DueDate:        time.Now().AddDate(0, 0, 30), // Due in 30 days
-			}
-
-			err = h.invoiceRepo.CreateInvoice(c.Request.Context(), &invoice)
-			if err != nil {
-				logger.Error("Failed to create invoice", zap.Error(err))
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create invoice"})
-				return
+		// Update fields based on provided data
+		if updateData.Status != "" {
+			existingSubscription.Status = updateData.Status
+		}
+		if updateData.PackageID != "" {
+			existingSubscription.PackageID = updateData.PackageID
+			// Fetch the new package and update related fields
+			newPackage, err := h.packageRepo.GetPackageByID(c.Request.Context(), updateData.PackageID)
+			if err == nil {
+				existingSubscription.PackagePrice = newPackage.Price
 			}
 		}
+		if updateData.DueAmount != "" {
+			existingSubscription.DueAmount = updateData.DueAmount
+		}
+		// Update other fields as needed
 
 		err = h.repo.UpdateSubscription(c.Request.Context(), existingSubscription)
 		if err != nil {
-			logger.Error("Failed to update subscription", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update subscription"})
+			logger.Error("Failed to update subscription data", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update subscription data"})
 			return
 		}
 

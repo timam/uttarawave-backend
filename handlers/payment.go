@@ -8,6 +8,7 @@ import (
 	"github.com/timam/uttarawave-backend/repositories"
 	"go.uber.org/zap"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -72,8 +73,11 @@ func (h *PaymentHandler) CreatePayment() gin.HandlerFunc {
 					return
 				}
 
-				subscription.DueAmount -= payment.Amount
-				if subscription.DueAmount <= 0 {
+				dueAmount, _ := strconv.ParseFloat(subscription.DueAmount, 64)
+				dueAmount -= payment.Amount
+				subscription.DueAmount = strconv.FormatFloat(dueAmount, 'f', 2, 64)
+
+				if dueAmount <= 0 {
 					subscription.Status = "Active"
 					subscription.PaidUntil = addMonths(subscription.PaidUntil, 1)
 					subscription.RenewalDate = getFirstDayOfNextMonth(subscription.PaidUntil)

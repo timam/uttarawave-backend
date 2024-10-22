@@ -35,23 +35,11 @@ func InitRouter() *gin.Engine {
 	packageHandler := handlers.NewPackageHandler(packageRepo)
 	packageRoutes := apiV1.Group("/packages")
 	{
-		internetRoutes := packageRoutes.Group("/internet")
-		{
-			internetRoutes.POST("", packageHandler.CreateInternetPackage())
-			internetRoutes.PUT("/:id", packageHandler.UpdateInternetPackage())
-			internetRoutes.DELETE("/:id", packageHandler.DeleteInternetPackage())
-			internetRoutes.GET("/:id", packageHandler.GetInternetPackage())
-			internetRoutes.GET("", packageHandler.GetAllInternetPackages())
-		}
-
-		cableTVRoutes := packageRoutes.Group("/cabletv")
-		{
-			cableTVRoutes.POST("", packageHandler.CreateCableTVPackage())
-			cableTVRoutes.PUT("/:id", packageHandler.UpdateCableTVPackage())
-			cableTVRoutes.DELETE("/:id", packageHandler.DeleteCableTVPackage())
-			cableTVRoutes.GET("/:id", packageHandler.GetCableTVPackage())
-			cableTVRoutes.GET("", packageHandler.GetAllCableTVPackages())
-		}
+		packageRoutes.POST("", packageHandler.CreatePackage())
+		packageRoutes.GET("/:id", packageHandler.GetPackage())
+		packageRoutes.PUT("/:id", packageHandler.UpdatePackage())
+		packageRoutes.DELETE("/:id", packageHandler.DeletePackage())
+		packageRoutes.GET("", packageHandler.GetAllPackages())
 	}
 
 	buildingRepo := repositories.NewGormBuildingRepository()

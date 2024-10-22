@@ -15,25 +15,21 @@ type PackageHandler struct {
 }
 
 func NewPackageHandler(repo repositories.PackageRepository) *PackageHandler {
-	return &PackageHandler{
-		repo: repo,
-	}
+	return &PackageHandler{repo: repo}
 }
 
-func (h *PackageHandler) CreateInternetPackage() gin.HandlerFunc {
+func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var pkg models.InternetPackage
+		var pkg models.Package
 		if err := c.ShouldBindJSON(&pkg); err != nil {
-			logger.Error("Failed to bind JSON", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
 		pkg.ID = uuid.New().String()
-		err := h.repo.CreateInternetPackage(c.Request.Context(), &pkg)
+		err := h.repo.CreatePackage(c.Request.Context(), &pkg)
 		if err != nil {
-			logger.Error("Failed to create internet package", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create internet package"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create package"})
 			return
 		}
 
@@ -41,21 +37,23 @@ func (h *PackageHandler) CreateInternetPackage() gin.HandlerFunc {
 	}
 }
 
-func (h *PackageHandler) UpdateInternetPackage() gin.HandlerFunc {
+func (h *PackageHandler) GetPackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		var pkg models.InternetPackage
-		if err := c.ShouldBindJSON(&pkg); err != nil {
-			logger.Error("Failed to bind JSON", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		if id == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Package ID is required"})
 			return
 		}
 
-		pkg.ID = id
-		err := h.repo.UpdateInternetPackage(c.Request.Context(), &pkg)
+		pkg, err := h.repo.GetPackageByID(c.Request.Context(), id)
 		if err != nil {
-			logger.Error("Failed to update internet package", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update internet package"})
+			logger.Error("Failed to get package", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get package"})
+			return
+		}
+
+		if pkg == nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Package not found"})
 			return
 		}
 
@@ -63,27 +61,12 @@ func (h *PackageHandler) UpdateInternetPackage() gin.HandlerFunc {
 	}
 }
 
-func (h *PackageHandler) DeleteInternetPackage() gin.HandlerFunc {
+func (h *PackageHandler) GetPackageByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		err := h.repo.DeleteInternetPackage(c.Request.Context(), id)
+		pkg, err := h.repo.GetPackageByID(c.Request.Context(), id)
 		if err != nil {
-			logger.Error("Failed to delete internet package", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete internet package"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "Internet package deleted successfully"})
-	}
-}
-
-func (h *PackageHandler) GetInternetPackage() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		pkg, err := h.repo.GetInternetPackageByID(c.Request.Context(), id)
-		if err != nil {
-			logger.Error("Failed to get internet package", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get internet package"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "Package not found"})
 			return
 		}
 
@@ -91,12 +74,11 @@ func (h *PackageHandler) GetInternetPackage() gin.HandlerFunc {
 	}
 }
 
-func (h *PackageHandler) GetAllInternetPackages() gin.HandlerFunc {
+func (h *PackageHandler) GetAllPackages() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		packages, err := h.repo.GetAllInternetPackages(c.Request.Context())
+		packages, err := h.repo.GetAllPackages(c.Request.Context())
 		if err != nil {
-			logger.Error("Failed to get all internet packages", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get all internet packages"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve packages"})
 			return
 		}
 
@@ -104,42 +86,19 @@ func (h *PackageHandler) GetAllInternetPackages() gin.HandlerFunc {
 	}
 }
 
-func (h *PackageHandler) CreateCableTVPackage() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		var pkg models.CableTVPackage
-		if err := c.ShouldBindJSON(&pkg); err != nil {
-			logger.Error("Failed to bind JSON", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		pkg.ID = uuid.New().String()
-		err := h.repo.CreateCableTVPackage(c.Request.Context(), &pkg)
-		if err != nil {
-			logger.Error("Failed to create CableTV package", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create CableTV package"})
-			return
-		}
-
-		c.JSON(http.StatusCreated, pkg)
-	}
-}
-
-func (h *PackageHandler) UpdateCableTVPackage() gin.HandlerFunc {
+func (h *PackageHandler) UpdatePackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		var pkg models.CableTVPackage
+		var pkg models.Package
 		if err := c.ShouldBindJSON(&pkg); err != nil {
-			logger.Error("Failed to bind JSON", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
 		pkg.ID = id
-		err := h.repo.UpdateCableTVPackage(c.Request.Context(), &pkg)
+		err := h.repo.UpdatePackage(c.Request.Context(), &pkg)
 		if err != nil {
-			logger.Error("Failed to update CableTV package", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update CableTV package"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update package"})
 			return
 		}
 
@@ -147,43 +106,15 @@ func (h *PackageHandler) UpdateCableTVPackage() gin.HandlerFunc {
 	}
 }
 
-func (h *PackageHandler) DeleteCableTVPackage() gin.HandlerFunc {
+func (h *PackageHandler) DeletePackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
-		err := h.repo.DeleteCableTVPackage(c.Request.Context(), id)
+		err := h.repo.DeletePackage(c.Request.Context(), id)
 		if err != nil {
-			logger.Error("Failed to delete CableTV package", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete CableTV package"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete package"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "CableTV package deleted successfully"})
-	}
-}
-
-func (h *PackageHandler) GetCableTVPackage() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		pkg, err := h.repo.GetCableTVPackageByID(c.Request.Context(), id)
-		if err != nil {
-			logger.Error("Failed to get CableTV package", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get CableTV package"})
-			return
-		}
-
-		c.JSON(http.StatusOK, pkg)
-	}
-}
-
-func (h *PackageHandler) GetAllCableTVPackages() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		packages, err := h.repo.GetAllCableTVPackages(c.Request.Context())
-		if err != nil {
-			logger.Error("Failed to get all CableTV packages", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get all CableTV packages"})
-			return
-		}
-
-		c.JSON(http.StatusOK, packages)
+		c.JSON(http.StatusOK, gin.H{"message": "Package deleted successfully"})
 	}
 }

@@ -41,8 +41,7 @@ func InitializePostgreSQL() error {
 
 	// Auto Migrate the schema
 	err = DB.AutoMigrate(
-		&models.InternetPackage{},
-		&models.CableTVPackage{},
+		&models.Package{},
 		&models.Building{},
 		&models.Device{},
 		&models.Customer{},
