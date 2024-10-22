@@ -4,10 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/timam/uttarawave-backend/models"
-	"github.com/timam/uttarawave-backend/pkg/logger"
 	"github.com/timam/uttarawave-backend/pkg/response"
 	"github.com/timam/uttarawave-backend/repositories"
-	"go.uber.org/zap"
 	"net/http"
 )
 
@@ -100,40 +98,27 @@ func (h *PackageHandler) GetAllPackages() gin.HandlerFunc {
 	}
 }
 
-func (h *PackageHandler) GetPackage() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		if id == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Package ID is required"})
-			return
-		}
-
-		pkg, err := h.repo.GetPackageByID(c.Request.Context(), id)
-		if err != nil {
-			logger.Error("Failed to get package", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get package"})
-			return
-		}
-
-		if pkg == nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Package not found"})
-			return
-		}
-
-		c.JSON(http.StatusOK, pkg)
-	}
-}
-
 func (h *PackageHandler) GetPackageByID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 		pkg, err := h.repo.GetPackageByID(c.Request.Context(), id)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Package not found"})
+			response.Error(c, http.StatusNotFound, "Package not found", err.Error())
 			return
 		}
 
-		c.JSON(http.StatusOK, pkg)
+		var responseData interface{}
+		switch pkg.Type {
+		case models.CableTVPackage:
+			responseData = response.NewTVPackageResponse(pkg)
+		case models.InternetPackage:
+			responseData = response.NewInternetPackageResponse(pkg)
+		default:
+			response.Error(c, http.StatusInternalServerError, "Invalid package type", "Unknown package type")
+			return
+		}
+
+		response.Success(c, http.StatusOK, "Package retrieved successfully", responseData)
 	}
 }
 

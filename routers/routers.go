@@ -36,7 +36,7 @@ func InitRouter() *gin.Engine {
 	packageRoutes := apiV1.Group("/packages")
 	{
 		packageRoutes.POST("", packageHandler.CreatePackage())
-		packageRoutes.GET("/:id", packageHandler.GetPackage())
+		packageRoutes.GET("/:id", packageHandler.GetPackageByID())
 		packageRoutes.PUT("/:id", packageHandler.UpdatePackage())
 		packageRoutes.DELETE("/:id", packageHandler.DeletePackage())
 		packageRoutes.GET("", packageHandler.GetAllPackages())
