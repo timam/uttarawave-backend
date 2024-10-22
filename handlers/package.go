@@ -102,13 +102,15 @@ func (h *PackageHandler) GetPackageByID() gin.HandlerFunc {
 
 func (h *PackageHandler) GetAllPackages() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		packages, err := h.repo.GetAllPackages(c.Request.Context())
+		packageType := c.Query("type")
+
+		packages, err := h.repo.GetAllPackages(c.Request.Context(), packageType)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retrieve packages"})
+			response.Error(c, http.StatusInternalServerError, "Failed to fetch packages", err.Error())
 			return
 		}
 
-		c.JSON(http.StatusOK, packages)
+		response.Success(c, http.StatusOK, "Packages retrieved successfully", packages)
 	}
 }
 
