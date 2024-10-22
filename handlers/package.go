@@ -32,7 +32,7 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 
 		// Validate mandatory fields for all package types
 		if pkg.Type == "" || pkg.Name == "" || pkg.Price == 0 || pkg.ConnectionClass == "" {
-			response.Error(c, http.StatusBadRequest, "Missing required fields", "Type, Name, Price, and ConnectionClass are mandatory")
+			response.Error(c, http.StatusBadRequest, "Missing required fields", "type, name, price, and connectionClass are mandatory for package creation")
 			return
 		}
 
@@ -40,16 +40,16 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 		switch pkg.Type {
 		case models.CableTVPackage:
 			if pkg.ChannelCount == 0 || pkg.TVCount == 0 {
-				response.Error(c, http.StatusBadRequest, "Missing required fields for Cable TV package", "ChannelCount and TVCount are required")
+				response.Error(c, http.StatusBadRequest, "Missing required fields for Cable TV package", "channelCount and tvCount are required")
 				return
 			}
 		case models.InternetPackage:
 			if pkg.Bandwidth == 0 || pkg.BandwidthType == "" {
-				response.Error(c, http.StatusBadRequest, "Missing required fields for Internet package", "Bandwidth and BandwidthType are required")
+				response.Error(c, http.StatusBadRequest, "Missing required fields for Internet package", "bandwidth and bandwidthType are required")
 				return
 			}
 		default:
-			response.Error(c, http.StatusBadRequest, "Invalid package type", "Package type must be either CableTV or Internet")
+			response.Error(c, http.StatusBadRequest, "Invalid package type", "type must be either CableTV or Internet")
 			return
 		}
 
