@@ -43,6 +43,10 @@ func (h *DeviceHandler) CreateDevice() gin.HandlerFunc {
 			device.PurchaseDate = &now
 		}
 
+		if device.Status == "" {
+			device.Status = models.InStock
+		}
+
 		err := h.repo.CreateDevice(c.Request.Context(), &device)
 		if err != nil {
 			logger.Error("Failed to create device", zap.Error(err))
