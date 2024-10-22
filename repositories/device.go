@@ -12,7 +12,7 @@ import (
 type DeviceRepository interface {
 	CreateDevice(ctx context.Context, device *models.Device) error
 	GetDeviceByID(ctx context.Context, id string) (*models.Device, error)
-	GetAllDevices(ctx context.Context) ([]models.Device, error)
+	GetAllDevices(ctx context.Context, page, pageSize int) ([]models.Device, int64, error)
 	UpdateDevice(ctx context.Context, device *models.Device) error
 	DeleteDevice(ctx context.Context, id string) error
 	AssignDevice(ctx context.Context, deviceID string, assignmentType string, assignmentID string) error
@@ -40,10 +40,21 @@ func (r *GormDeviceRepository) GetDeviceByID(ctx context.Context, id string) (*m
 	return &device, nil
 }
 
-func (r *GormDeviceRepository) GetAllDevices(ctx context.Context) ([]models.Device, error) {
+func (r *GormDeviceRepository) GetAllDevices(ctx context.Context, page, pageSize int) ([]models.Device, int64, error) {
 	var devices []models.Device
-	err := db.DB.WithContext(ctx).Find(&devices).Error
-	return devices, err
+	var totalCount int64
+
+	offset := (page - 1) * pageSize
+
+	if err := db.DB.WithContext(ctx).Model(&models.Device{}).Count(&totalCount).Error; err != nil {
+		return nil, 0, err
+	}
+
+	if err := db.DB.WithContext(ctx).Offset(offset).Limit(pageSize).Find(&devices).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return devices, totalCount, nil
 }
 
 func (r *GormDeviceRepository) UpdateDevice(ctx context.Context, device *models.Device) error {

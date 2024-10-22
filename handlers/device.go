@@ -9,6 +9,7 @@ import (
 	"github.com/timam/uttarawave-backend/repositories"
 	"go.uber.org/zap"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -126,19 +127,18 @@ func (h *DeviceHandler) DeleteDevice() gin.HandlerFunc {
 
 func (h *DeviceHandler) GetAllDevices() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		devices, err := h.repo.GetAllDevices(c.Request.Context())
+		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+		pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
+
+		devices, totalCount, err := h.repo.GetAllDevices(c.Request.Context(), page, pageSize)
 		if err != nil {
 			logger.Error("Failed to get all devices", zap.Error(err))
 			response.Error(c, http.StatusInternalServerError, "Failed to get all devices", err.Error())
 			return
 		}
 
-		deviceResponses := make([]response.DeviceResponse, len(devices))
-		for i, device := range devices {
-			deviceResponses[i] = response.NewDeviceResponse(&device)
-		}
-
-		response.Success(c, http.StatusOK, "Devices retrieved successfully", deviceResponses)
+		deviceListResponse := response.NewDeviceListResponse(devices, totalCount, page, pageSize)
+		response.Success(c, http.StatusOK, "Devices retrieved successfully", deviceListResponse)
 	}
 }
 
