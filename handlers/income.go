@@ -35,16 +35,32 @@ func (h *IncomeHandler) CreateIncome() gin.HandlerFunc {
 		income.ID = uuid.New().String()
 		income.ReceivedAt = time.Now()
 
-		if income.Type == models.SubscriptionPayment && income.SubscriptionID != nil {
+		if income.Type == models.SubscriptionPayment {
+			if income.SubscriptionID == nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "SubscriptionID is required for subscription payments"})
+				return
+			}
 			subscription, err := h.subscriptionRepo.GetSubscription(c.Request.Context(), *income.SubscriptionID)
 			if err != nil {
 				logger.Error("Failed to get subscription", zap.Error(err))
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get subscription"})
 				return
 			}
+			income.CustomerID = &subscription.CustomerID
 
 			// Update subscription (similar to existing ProcessCashTransaction logic)
-			// ...
+			subscription.Status = "Active"
+			monthlyPrice := getMonthlyPrice(subscription)
+			totalDue := subscription.DueAmount + monthlyPrice
+
+			if income.Amount >= totalDue {
+				monthsPaid := int(income.Amount / monthlyPrice)
+				subscription.PaidUntil = addMonths(subscription.PaidUntil, monthsPaid)
+				subscription.DueAmount = 0
+			} else {
+				subscription.DueAmount = totalDue - income.Amount
+			}
+			subscription.RenewalDate = getFirstDayOfNextMonth(subscription.PaidUntil)
 
 			err = h.subscriptionRepo.UpdateSubscription(c.Request.Context(), subscription)
 			if err != nil {
@@ -52,6 +68,9 @@ func (h *IncomeHandler) CreateIncome() gin.HandlerFunc {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update subscription"})
 				return
 			}
+		} else if income.CustomerID == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "CustomerID is required for non-subscription incomes"})
+			return
 		}
 
 		err := h.incomeRepo.CreateIncome(c.Request.Context(), &income)

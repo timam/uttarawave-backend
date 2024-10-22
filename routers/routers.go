@@ -91,13 +91,6 @@ func InitRouter() *gin.Engine {
 		subscriptionRoutes.GET("", subscriptionHandler.GetAllSubscriptions())
 	}
 
-	transactionRepo := repositories.NewGormTransactionRepository()
-	transactionHandler := handlers.NewTransactionHandler(transactionRepo, subscriptionRepo)
-	transactionRoutes := apiV1.Group("/transactions")
-	{
-		transactionRoutes.POST("/cash", transactionHandler.ProcessCashTransaction())
-	}
-
 	customerRepo := repositories.NewGormCustomerRepository()
 	customerHandler := handlers.NewCustomerHandler(customerRepo, buildingRepo, subscriptionRepo, deviceRepo)
 	customerRoutes := apiV1.Group("/customers")

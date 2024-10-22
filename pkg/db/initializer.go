@@ -47,7 +47,6 @@ func InitializePostgreSQL() error {
 		&models.Device{},
 		&models.Customer{},
 		&models.Subscription{},
-		&models.Transaction{},
 		&models.Income{},
 		&models.Expense{})
 	if err != nil {

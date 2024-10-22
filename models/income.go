@@ -12,7 +12,7 @@ const (
 type Income struct {
 	ID             string     `gorm:"primaryKey" json:"id"`
 	SubscriptionID *string    `gorm:"index" json:"subscriptionId,omitempty"`
-	CustomerID     string     `gorm:"index" json:"customerId"`
+	CustomerID     *string    `gorm:"index" json:"customerId,omitempty"`
 	Amount         float64    `json:"amount"`
 	Type           IncomeType `json:"type"`
 	Description    string     `json:"description"`
