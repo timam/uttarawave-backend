@@ -80,8 +80,10 @@ func InitRouter() *gin.Engine {
 		deviceRoutes.GET("/by-subscription", deviceHandler.GetDeviceBySubscriptionID())
 	}
 
+	invoiceRepo := repositories.NewGormInvoiceRepository()
+
 	subscriptionRepo := repositories.NewGormSubscriptionRepository()
-	subscriptionHandler := handlers.NewSubscriptionHandler(subscriptionRepo, packageRepo, deviceRepo)
+	subscriptionHandler := handlers.NewSubscriptionHandler(subscriptionRepo, packageRepo, deviceRepo, invoiceRepo)
 	subscriptionRoutes := apiV1.Group("/subscriptions")
 	{
 		subscriptionRoutes.POST("", subscriptionHandler.CreateSubscription())
@@ -102,16 +104,26 @@ func InitRouter() *gin.Engine {
 		customerRoutes.GET("/full-details", customerHandler.GetAllCustomersFullDetails())
 	}
 
-	incomeRepo := repositories.NewGormIncomeRepository()
-	expenseRepo := repositories.NewGormExpenseRepository()
-	incomeHandler := handlers.NewIncomeHandler(incomeRepo, subscriptionRepo)
-	expenseHandler := handlers.NewExpenseHandler(expenseRepo)
+	paymentRepo := repositories.NewGormPaymentRepository()
+	paymentHandler := handlers.NewPaymentHandler(paymentRepo, subscriptionRepo, invoiceRepo)
+	invoiceHandler := handlers.NewInvoiceHandler(invoiceRepo, subscriptionRepo)
 
-	incomeRoutes := apiV1.Group("/incomes")
+	paymentRoutes := apiV1.Group("/payments")
 	{
-		incomeRoutes.POST("", incomeHandler.CreateIncome())
-		// Add other income routes here
+		paymentRoutes.POST("", paymentHandler.CreatePayment())
+		// Add other payment routes here
 	}
+
+	invoiceRoutes := apiV1.Group("/invoices")
+	{
+		invoiceRoutes.POST("", invoiceHandler.CreateInvoice())
+		//invoiceRoutes.GET("/:id", invoiceHandler.GetInvoice())
+		//invoiceRoutes.PUT("/:id", invoiceHandler.UpdateInvoice())
+		//invoiceRoutes.GET("", invoiceHandler.GetAllInvoices())
+	}
+
+	expenseRepo := repositories.NewGormExpenseRepository()
+	expenseHandler := handlers.NewExpenseHandler(expenseRepo)
 
 	expenseRoutes := apiV1.Group("/expenses")
 	{

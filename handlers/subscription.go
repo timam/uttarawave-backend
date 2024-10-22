@@ -17,16 +17,19 @@ type SubscriptionHandler struct {
 	repo        repositories.SubscriptionRepository
 	packageRepo repositories.PackageRepository
 	deviceRepo  repositories.DeviceRepository
+	invoiceRepo repositories.InvoiceRepository
 }
 
 func NewSubscriptionHandler(
 	repo repositories.SubscriptionRepository,
 	packageRepo repositories.PackageRepository,
-	deviceRepo repositories.DeviceRepository) *SubscriptionHandler {
+	deviceRepo repositories.DeviceRepository,
+	invoiceRepo repositories.InvoiceRepository) *SubscriptionHandler {
 	return &SubscriptionHandler{
 		repo:        repo,
 		packageRepo: packageRepo,
 		deviceRepo:  deviceRepo,
+		invoiceRepo: invoiceRepo,
 	}
 }
 
@@ -163,7 +166,28 @@ func (h *SubscriptionHandler) UpdateSubscription() gin.HandlerFunc {
 		existingSubscription.MonthlyDiscount = updateData.MonthlyDiscount
 		existingSubscription.Status = updateData.Status
 		existingSubscription.DeviceID = updateData.DeviceID
-		existingSubscription.DueAmount = updateData.DueAmount
+
+		// Update DueAmount and create a new invoice if necessary
+		if updateData.DueAmount > existingSubscription.DueAmount {
+			difference := updateData.DueAmount - existingSubscription.DueAmount
+			existingSubscription.DueAmount = updateData.DueAmount
+
+			invoice := models.Invoice{
+				ID:             uuid.New().String(),
+				CustomerID:     existingSubscription.CustomerID,
+				SubscriptionID: &existingSubscription.ID,
+				Amount:         difference,
+				Status:         models.InvoicePending,
+				DueDate:        time.Now().AddDate(0, 0, 30), // Due in 30 days
+			}
+
+			err = h.invoiceRepo.CreateInvoice(c.Request.Context(), &invoice)
+			if err != nil {
+				logger.Error("Failed to create invoice", zap.Error(err))
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create invoice"})
+				return
+			}
+		}
 
 		err = h.repo.UpdateSubscription(c.Request.Context(), existingSubscription)
 		if err != nil {
@@ -172,7 +196,7 @@ func (h *SubscriptionHandler) UpdateSubscription() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Subscription updated successfully", "subscription": existingSubscription})
+		c.JSON(http.StatusOK, existingSubscription)
 	}
 }
 
