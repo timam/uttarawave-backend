@@ -1,76 +1,82 @@
-Internet Packages' Test Cases:
-1. Given an admin wants to create a new internet package
-   When they provide valid package details(name, speed, price, connection type, bandwidth type)
-   Then the system creates a new internet package and confirms its creation
+The system manages two specific types of packages: Internet Packages and Cable TV Packages. Each package has the following details:
 
-2. Given an employee attempts to create a new internet package
-   When they try to access the package creation feature
-   Then the system informs them they don't have permission to perform this action
-   
-3. Given an admin attempts to create an internet package with invalid data
+Common fields for all packages:
+- Unique ID
+- Name
+- Type (Internet or Cable TV)
+- Price
+- Connection Class
+- Active Status (to indicate if the package is currently offered)
+
+For Internet Packages:
+- Bandwidth
+- Bandwidth Type (Mbps)
+
+For Cable TV Packages:
+- Channel Count
+- TV Count
+
+-----
+Common Test Cases for Both Package Types:
+
+1. Given an admin wants to create a new package (Internet or Cable TV)
+   When they provide valid package details (id, type, name, price, isActive, connectionClass, and type-specific fields)
+   Then the system creates a new package and confirms its creation with the appropriate response model
+
+2. Given an admin attempts to create a package with missing required fields
    When they submit the package details
-   Then the system informs them of the specific validation errors
-   
-4. Given an admin wants to update an existing internet package
+   Then the system returns a 400 Bad Request error with specific validation messages
+
+3. Given an admin wants to update an existing package
    When they provide valid updated details for the package
-   Then the system updates the package and confirms the changes
-   
-5. Given an employee attempts to update an internet package
-   When they try to access the package update feature
-   Then the system informs them they don't have permission to perform this action
-   
-6. Given an admin wants to delete an existing internet package
+   Then the system updates the package and confirms the changes with the appropriate response model
+
+4. Given an admin wants to delete an existing package
    When they select a package for deletion
-   Then the system removes the package and confirms its deletion
-   
-7. Given an employee attempts to delete an internet package
-   When they try to access the package deletion feature
-   Then the system informs them they don't have permission to perform this action
-   
-8. Given an admin or employee wants to view details of a specific internet package
-   When they select a package to view
-   Then the system displays the complete details of the selected package
-   
-9. Given an admin or employee wants to view all internet packages
+   Then the system removes the package and confirms its deletion with a success message
+
+5. Given a user wants to view details of a specific package
+   When they request a package by ID
+   Then the system displays the complete details of the selected package using the appropriate response model
+
+6. Given a user wants to view all packages
    When they access the package listing feature
-   Then the system displays a list of all available internet packages
+   Then the system displays a list of all available packages, using the appropriate response models
 
+7. Given a user wants to view packages of a specific type
+   When they request packages with a type parameter (Internet or Cable TV)
+   Then the system displays a list of packages of the specified type, using the appropriate response models
 
+Internet Package Specific Test Cases:
 
+1. Given an admin wants to create a new Internet package
+   When they provide valid package details including bandwidth and bandwidthType
+   Then the system creates a new Internet package and confirms its creation with the InternetPackageResponse model
 
-Cable TV Packages' Test Cases:
-1. Given an admin wants to create a new CableTV package
-   When they provide valid package details
-   Then the system creates a new CableTV package and confirms its creation
-
-2. Given an employee attempts to create a new CableTV package
-   When they try to access the package creation feature
-   Then the system informs them they don't have permission to perform this action
-
-3. Given an admin attempts to create a CableTV package with invalid data
+2. Given an admin attempts to create an Internet package without bandwidth or bandwidthType
    When they submit the package details
-   Then the system informs them of the specific validation errors
-   
-4. Given an admin wants to update an existing CableTV package
-   When they provide valid updated details for the package
-   Then the system updates the package and confirms the changes
-   
-5. Given an employee attempts to update a CableTV package
-   When they try to access the package update feature
-   Then the system informs them they don't have permission to perform this action
-   
-6. Given an admin wants to delete an existing CableTV package
-   When they select a package for deletion 
-   Then the system removes the package and confirms its deletion
-   
-7. Given an employee attempts to delete a CableTV package
-   When they try to access the package deletion feature
-   Then the system informs them they don't have permission to perform this action
-   
-8. Given an admin or employee wants to view details of a specific CableTV package
-   When they select a package to view
-   Then the system displays the complete details of the selected package
-   
-9. Given an admin or employee wants to view all CableTV packages
-   When they access the package listing feature
-   Then the system displays a list of all available CableTV packages
+   Then the system returns a 400 Bad Request error with a message indicating missing required fields
+
+Cable TV Package Specific Test Cases:
+
+1. Given an admin wants to create a new Cable TV package
+   When they provide valid package details including channelCount and tvCount
+   Then the system creates a new Cable TV package and confirms its creation with the TVPackageResponse model
+
+2. Given an admin attempts to create a Cable TV package without channelCount or tvCount
+   When they submit the package details
+   Then the system returns a 400 Bad Request error with a message indicating missing required fields
+
+Error Handling Test Cases:
+
+1. Given a user requests a non-existent package
+   When they provide an invalid package ID
+   Then the system returns a 404 Not Found error
+
+2. Given an admin attempts to update a non-existent package
+   When they provide an invalid package ID
+   Then the system returns a 404 Not Found error
+
+3. Given an admin attempts to delete a non-existent package
+   When they provide an invalid package ID
+   Then the system returns a 404 Not Found error
