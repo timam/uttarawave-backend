@@ -109,6 +109,23 @@ func InitRouter() *gin.Engine {
 		customerRoutes.GET("/full-details", customerHandler.GetAllCustomersFullDetails())
 	}
 
+	incomeRepo := repositories.NewGormIncomeRepository()
+	expenseRepo := repositories.NewGormExpenseRepository()
+	incomeHandler := handlers.NewIncomeHandler(incomeRepo, subscriptionRepo)
+	expenseHandler := handlers.NewExpenseHandler(expenseRepo)
+
+	incomeRoutes := apiV1.Group("/incomes")
+	{
+		incomeRoutes.POST("", incomeHandler.CreateIncome())
+		// Add other income routes here
+	}
+
+	expenseRoutes := apiV1.Group("/expenses")
+	{
+		expenseRoutes.POST("", expenseHandler.CreateExpense())
+		// Add other expense routes here
+	}
+
 	logger.Info("Router initialized successfully")
 	return router
 }
