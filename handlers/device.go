@@ -12,14 +12,12 @@ import (
 )
 
 type DeviceHandler struct {
-	repo         repositories.DeviceRepository
-	buildingRepo repositories.BuildingRepository
+	repo repositories.DeviceRepository
 }
 
-func NewDeviceHandler(repo repositories.DeviceRepository, buildingRepo repositories.BuildingRepository) *DeviceHandler {
+func NewDeviceHandler(repo repositories.DeviceRepository) *DeviceHandler {
 	return &DeviceHandler{
-		repo:         repo,
-		buildingRepo: buildingRepo,
+		repo: repo,
 	}
 }
 
@@ -32,30 +30,16 @@ func (h *DeviceHandler) CreateDevice() gin.HandlerFunc {
 			return
 		}
 
-		// Generate a unique ID for the device
 		device.ID = uuid.New().String()
 
-		// Validate required fields
 		if device.Brand == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Brand is required"})
 			return
 		}
 
-		// Set date fields only if they are provided
 		now := time.Now()
 		if device.PurchaseDate == nil {
 			device.PurchaseDate = &now
-		}
-		// AssignedDate and CollectionDate remain nil if not provided
-
-		// If BuildingID is provided, verify that the building exists
-		if device.BuildingID != nil && *device.BuildingID != "" {
-			building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), *device.BuildingID)
-			if err != nil || building == nil {
-				logger.Error("Invalid BuildingID provided", zap.Error(err))
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid BuildingID provided"})
-				return
-			}
 		}
 
 		err := h.repo.CreateDevice(c.Request.Context(), &device)
@@ -69,6 +53,7 @@ func (h *DeviceHandler) CreateDevice() gin.HandlerFunc {
 		c.JSON(http.StatusCreated, gin.H{"message": "Device created successfully", "device": device})
 	}
 }
+
 func (h *DeviceHandler) GetDevice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -100,12 +85,10 @@ func (h *DeviceHandler) UpdateDevice() gin.HandlerFunc {
 			return
 		}
 
-		// Update fields
 		existingDevice.Brand = updatedDevice.Brand
 		existingDevice.Model = updatedDevice.Model
 		existingDevice.SerialNumber = updatedDevice.SerialNumber
 		existingDevice.Type = updatedDevice.Type
-		existingDevice.Usage = updatedDevice.Usage
 		existingDevice.Status = updatedDevice.Status
 
 		err = h.repo.UpdateDevice(c.Request.Context(), existingDevice)
@@ -146,57 +129,31 @@ func (h *DeviceHandler) GetAllDevices() gin.HandlerFunc {
 	}
 }
 
-func (h *DeviceHandler) AssignDeviceToSubscription() gin.HandlerFunc {
+func (h *DeviceHandler) AssignDevice() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		deviceID := c.Param("id")
 		var request struct {
-			SubscriptionID string `json:"subscriptionId"`
+			AssignmentType string `json:"assignmentType"`
+			AssignmentID   string `json:"assignmentId"`
 		}
 		if err := c.ShouldBindJSON(&request); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		if request.SubscriptionID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Subscription ID is required"})
+		if request.AssignmentType == "" || request.AssignmentID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Assignment type and ID are required"})
 			return
 		}
 
-		err := h.repo.AssignDeviceToSubscription(c.Request.Context(), deviceID, request.SubscriptionID)
+		err := h.repo.AssignDevice(c.Request.Context(), deviceID, request.AssignmentType, request.AssignmentID)
 		if err != nil {
-			logger.Error("Failed to assign device to subscription", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign device to subscription"})
+			logger.Error("Failed to assign device", zap.Error(err))
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign device"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Device assigned to subscription successfully"})
-	}
-}
-
-func (h *DeviceHandler) AssignDeviceToBuilding() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		deviceID := c.Param("id")
-		var request struct {
-			BuildingID string `json:"buildingId"`
-		}
-		if err := c.ShouldBindJSON(&request); err != nil {
-			logger.Error("Failed to bind JSON", zap.Error(err))
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		if request.BuildingID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Building ID is required"})
-			return
-		}
-
-		err := h.repo.AssignDeviceToBuilding(c.Request.Context(), deviceID, request.BuildingID)
-		if err != nil {
-			logger.Error("Failed to assign device to building", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign device to building"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "Device assigned to building successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "Device assigned successfully"})
 	}
 }
 
@@ -215,23 +172,24 @@ func (h *DeviceHandler) UnassignDevice() gin.HandlerFunc {
 	}
 }
 
-func (h *DeviceHandler) GetDeviceBySubscriptionID() gin.HandlerFunc {
+func (h *DeviceHandler) GetDeviceByAssignment() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		subscriptionID := c.Query("subscriptionId")
-		if subscriptionID == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Subscription ID is required"})
+		assignmentType := c.Query("assignmentType")
+		assignmentID := c.Query("assignmentId")
+		if assignmentType == "" || assignmentID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Assignment type and ID are required"})
 			return
 		}
 
-		device, err := h.repo.GetDeviceBySubscriptionID(c.Request.Context(), subscriptionID)
+		device, err := h.repo.GetDeviceByAssignment(c.Request.Context(), assignmentType, assignmentID)
 		if err != nil {
-			logger.Error("Failed to get device by subscription ID", zap.Error(err))
+			logger.Error("Failed to get device by assignment", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get device"})
 			return
 		}
 
 		if device == nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "No device found for this subscription"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "No device found for this assignment"})
 			return
 		}
 
