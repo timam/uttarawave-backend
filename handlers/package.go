@@ -110,7 +110,15 @@ func (h *PackageHandler) GetAllPackages() gin.HandlerFunc {
 			return
 		}
 
-		response.Success(c, http.StatusOK, "Packages retrieved successfully", packages)
+		if packageType == string(models.CableTVPackage) {
+			tvPackages := make([]response.TVPackageResponse, 0)
+			for _, pkg := range packages {
+				tvPackages = append(tvPackages, response.NewTVPackageResponse(&pkg))
+			}
+			response.Success(c, http.StatusOK, "TV packages retrieved successfully", tvPackages)
+		} else {
+			response.Success(c, http.StatusOK, "Packages retrieved successfully", packages)
+		}
 	}
 }
 
