@@ -23,7 +23,7 @@ Devices (e.g., cable boxes, modems) can be associated with a customer's subscrip
 Buildings can have internet or cable TV connections. Buildings can have devices associated with them, and customers can be linked to a specific building and flat number.
 
 ### Packages
-The system manages two types of packages: Internet Packages and Cable TV Packages. Each package has details like name, speed, price, connection type, bandwidth type, and channel lineup.
+The system manages two types of packages: Internet Packages and Cable TV Packages. Each package has details like name, speed, price, connection type, bandwidth type, and channel count tv count.
 
 ## Flow of Operations
 
