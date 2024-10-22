@@ -53,18 +53,17 @@ func InitRouter() *gin.Engine {
 	}
 
 	deviceRepo := repositories.NewGormDeviceRepository()
-	deviceHandler := handlers.NewDeviceHandler(deviceRepo, buildingRepo)
+	deviceHandler := handlers.NewDeviceHandler(deviceRepo)
 	deviceRoutes := apiV1.Group("/devices")
 	{
 		deviceRoutes.POST("", deviceHandler.CreateDevice())
+		deviceRoutes.GET("", deviceHandler.GetAllDevices())
 		deviceRoutes.GET("/:id", deviceHandler.GetDevice())
 		deviceRoutes.PUT("/:id", deviceHandler.UpdateDevice())
-		deviceRoutes.DELETE("/:id", deviceHandler.DeleteDevice())
-		deviceRoutes.GET("", deviceHandler.GetAllDevices())
-		deviceRoutes.POST("/:id/assign-to-subscription", deviceHandler.AssignDeviceToSubscription())
-		deviceRoutes.POST("/:id/assign-to-building", deviceHandler.AssignDeviceToBuilding())
+		deviceRoutes.POST("/:id/assign", deviceHandler.AssignDevice())
 		deviceRoutes.POST("/:id/unassign", deviceHandler.UnassignDevice())
-		deviceRoutes.GET("/by-subscription", deviceHandler.GetDeviceBySubscriptionID())
+		deviceRoutes.DELETE("/:id", deviceHandler.DeleteDevice())
+		deviceRoutes.GET("/by-assignment", deviceHandler.GetDeviceByAssignment())
 	}
 
 	invoiceRepo := repositories.NewGormInvoiceRepository()
@@ -88,7 +87,7 @@ func InitRouter() *gin.Engine {
 		customerRoutes.GET("", customerHandler.GetCustomer())
 		customerRoutes.PUT("/:id", customerHandler.UpdateCustomer())
 		customerRoutes.DELETE("", customerHandler.DeleteCustomer())
-		customerRoutes.GET("/full-details", customerHandler.GetAllCustomersFullDetails())
+		//customerRoutes.GET("/full-details", customerHandler.GetAllCustomersFullDetails())
 	}
 
 	paymentRepo := repositories.NewGormPaymentRepository()

@@ -327,73 +327,73 @@ func (h *CustomerHandler) DeleteCustomer() gin.HandlerFunc {
 	}
 }
 
-func (h *CustomerHandler) GetAllCustomersFullDetails() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-		pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "50"))
-
-		customers, totalCount, err := h.repo.GetCustomersPaginated(page, pageSize)
-		if err != nil {
-			logger.Error("Failed to get customers", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customers"})
-			return
-		}
-
-		var fullCustomersDetails []gin.H
-		for _, customer := range customers {
-			subscriptions, err := h.subscriptionRepo.GetSubscriptionsByCustomerID(c.Request.Context(), customer.ID)
-			if err != nil {
-				logger.Error("Failed to get subscriptions", zap.Error(err), zap.String("customerID", customer.ID))
-				continue
-			}
-
-			var fullSubscriptions []gin.H
-			for _, sub := range subscriptions {
-				device, err := h.deviceRepo.GetDeviceBySubscriptionID(c.Request.Context(), sub.ID)
-				if err != nil {
-					logger.Error("Failed to get device", zap.Error(err), zap.String("subscriptionID", sub.ID))
-					continue
-				}
-
-				fullSub := gin.H{
-					"subscription": sub,
-					"device":       device,
-				}
-				fullSubscriptions = append(fullSubscriptions, fullSub)
-			}
-
-			var buildingDetails gin.H
-			if customer.BuildingID != "" {
-				building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), customer.BuildingID)
-				if err != nil {
-					logger.Error("Failed to get building details", zap.Error(err), zap.String("buildingID", customer.BuildingID))
-				} else {
-					buildingDetails = gin.H{
-						"id":    building.ID,
-						"name":  building.Name,
-						"house": building.House,
-						"road":  building.Road,
-						"block": building.Block,
-						"area":  building.Area,
-					}
-				}
-			}
-
-			customerDetails := gin.H{
-				"customer":      customer,
-				"subscriptions": fullSubscriptions,
-				"building":      buildingDetails,
-			}
-			fullCustomersDetails = append(fullCustomersDetails, customerDetails)
-		}
-
-		response := gin.H{
-			"customers":  fullCustomersDetails,
-			"totalCount": totalCount,
-			"page":       page,
-			"pageSize":   pageSize,
-		}
-
-		c.JSON(http.StatusOK, response)
-	}
-}
+//func (h *CustomerHandler) GetAllCustomersFullDetails() gin.HandlerFunc {
+//	return func(c *gin.Context) {
+//		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+//		pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "50"))
+//
+//		customers, totalCount, err := h.repo.GetCustomersPaginated(page, pageSize)
+//		if err != nil {
+//			logger.Error("Failed to get customers", zap.Error(err))
+//			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customers"})
+//			return
+//		}
+//
+//		var fullCustomersDetails []gin.H
+//		for _, customer := range customers {
+//			subscriptions, err := h.subscriptionRepo.GetSubscriptionsByCustomerID(c.Request.Context(), customer.ID)
+//			if err != nil {
+//				logger.Error("Failed to get subscriptions", zap.Error(err), zap.String("customerID", customer.ID))
+//				continue
+//			}
+//
+//			var fullSubscriptions []gin.H
+//			for _, sub := range subscriptions {
+//				device, err := h.deviceRepo.GetDeviceBySubscriptionID(c.Request.Context(), sub.ID)
+//				if err != nil {
+//					logger.Error("Failed to get device", zap.Error(err), zap.String("subscriptionID", sub.ID))
+//					continue
+//				}
+//
+//				fullSub := gin.H{
+//					"subscription": sub,
+//					"device":       device,
+//				}
+//				fullSubscriptions = append(fullSubscriptions, fullSub)
+//			}
+//
+//			var buildingDetails gin.H
+//			if customer.BuildingID != "" {
+//				building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), customer.BuildingID)
+//				if err != nil {
+//					logger.Error("Failed to get building details", zap.Error(err), zap.String("buildingID", customer.BuildingID))
+//				} else {
+//					buildingDetails = gin.H{
+//						"id":    building.ID,
+//						"name":  building.Name,
+//						"house": building.House,
+//						"road":  building.Road,
+//						"block": building.Block,
+//						"area":  building.Area,
+//					}
+//				}
+//			}
+//
+//			customerDetails := gin.H{
+//				"customer":      customer,
+//				"subscriptions": fullSubscriptions,
+//				"building":      buildingDetails,
+//			}
+//			fullCustomersDetails = append(fullCustomersDetails, customerDetails)
+//		}
+//
+//		response := gin.H{
+//			"customers":  fullCustomersDetails,
+//			"totalCount": totalCount,
+//			"page":       page,
+//			"pageSize":   pageSize,
+//		}
+//
+//		c.JSON(http.StatusOK, response)
+//	}
+//}

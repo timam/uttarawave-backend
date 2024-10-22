@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/timam/uttarawave-backend/models"
@@ -194,25 +193,26 @@ func (h *SubscriptionHandler) GetAllSubscriptions() gin.HandlerFunc {
 		c.JSON(http.StatusOK, response)
 	}
 }
-func (h *SubscriptionHandler) ProcessExpiredSubscriptions() {
-	ctx := context.Background()
-	expiredSubscriptions, err := h.repo.GetExpiredSubscriptions(ctx)
-	if err != nil {
-		logger.Error("Failed to get expired subscriptions", zap.Error(err))
-		return
-	}
 
-	for _, subscription := range expiredSubscriptions {
-		if subscription.DeviceID != "" {
-			err := h.deviceRepo.MarkDeviceForCollection(ctx, subscription.DeviceID)
-			if err != nil {
-				logger.Error("Failed to mark device for collection", zap.Error(err), zap.String("deviceID", subscription.DeviceID))
-			}
-		}
-		subscription.Status = "Expired"
-		err := h.repo.UpdateSubscription(ctx, &subscription)
-		if err != nil {
-			logger.Error("Failed to update subscription status", zap.Error(err), zap.String("subscriptionID", subscription.ID))
-		}
-	}
-}
+//func (h *SubscriptionHandler) ProcessExpiredSubscriptions() {
+//	ctx := context.Background()
+//	expiredSubscriptions, err := h.repo.GetExpiredSubscriptions(ctx)
+//	if err != nil {
+//		logger.Error("Failed to get expired subscriptions", zap.Error(err))
+//		return
+//	}
+//
+//	for _, subscription := range expiredSubscriptions {
+//		if subscription.DeviceID != "" {
+//			err := h.deviceRepo.MarkDeviceForCollection(ctx, subscription.DeviceID)
+//			if err != nil {
+//				logger.Error("Failed to mark device for collection", zap.Error(err), zap.String("deviceID", subscription.DeviceID))
+//			}
+//		}
+//		subscription.Status = "Expired"
+//		err := h.repo.UpdateSubscription(ctx, &subscription)
+//		if err != nil {
+//			logger.Error("Failed to update subscription status", zap.Error(err), zap.String("subscriptionID", subscription.ID))
+//		}
+//	}
+//}
