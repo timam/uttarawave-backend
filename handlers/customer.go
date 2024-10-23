@@ -213,6 +213,7 @@ func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
 }
 
 func (h *CustomerHandler) DeleteCustomer() gin.HandlerFunc {
+	//TODO: if customer have any associated subscription, or any device that is not returned; customer cant be deleted.
 	return func(c *gin.Context) {
 		mobile := c.Query("mobile")
 
@@ -228,7 +229,7 @@ func (h *CustomerHandler) DeleteCustomer() gin.HandlerFunc {
 			response.Error(c, http.StatusInternalServerError, "Failed to find customer by mobile", err.Error())
 			return
 		}
-		if customer.ID == "" {
+		if customer == nil {
 			err := errors.New("customer not found")
 			response.Error(c, http.StatusNotFound, "Customer not found", err.Error())
 			return
