@@ -9,14 +9,6 @@ const (
 	CableTVPackage  PackageType = "CableTV"
 )
 
-type ConnectionClass string
-
-const (
-	Home      ConnectionClass = "home"
-	Business  ConnectionClass = "business"
-	Corporate ConnectionClass = "corporate"
-)
-
 type BandwidthType string
 
 const (
@@ -25,19 +17,19 @@ const (
 )
 
 type Package struct {
-	ID              string          `gorm:"primaryKey" json:"id"`
-	Type            PackageType     `json:"type"`
-	Name            string          `gorm:"type:varchar(100)" json:"name"`
-	Price           float64         `json:"price"`
-	IsActive        bool            `json:"isActive"`
-	ConnectionClass ConnectionClass `json:"connectionClass"`
+	ID       string      `gorm:"primaryKey" json:"id"`
+	Type     PackageType `json:"type"`
+	Name     string      `gorm:"type:varchar(100)" json:"name"`
+	Price    float64     `json:"price"`
+	IsActive bool        `json:"isActive"`
 
-	Bandwidth     int           `json:"bandwidth"` // Changed from "speed" to "bandwidth"
+	Bandwidth     int           `json:"bandwidth"`
 	BandwidthType BandwidthType `json:"bandwidthType"`
 	HasRealIP     bool          `json:"hasRealIP"`
 
-	ChannelCount int       `json:"channelCount,omitempty"`
-	TVCount      int       `json:"tvCount,omitempty"`
-	CreatedAt    time.Time `gorm:"autoCreateTime" json:"createdAt"`
-	UpdatedAt    time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
+	ChannelCount int `json:"channelCount,omitempty"`
+	TVCount      int `json:"tvCount,omitempty"`
+
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }

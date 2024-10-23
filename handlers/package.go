@@ -29,8 +29,8 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 		pkg.IsActive = true // Set the package as active by default
 
 		// Validate mandatory fields for all package types
-		if pkg.Type == "" || pkg.Name == "" || pkg.Price == 0 || pkg.ConnectionClass == "" {
-			response.Error(c, http.StatusBadRequest, "Missing required fields", "type, name, price, and connectionClass are mandatory for package creation")
+		if pkg.Type == "" || pkg.Name == "" || pkg.Price == 0 {
+			response.Error(c, http.StatusBadRequest, "Missing required fields", "type, name, and price are mandatory for package creation")
 			return
 		}
 
