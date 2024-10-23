@@ -19,6 +19,7 @@ func NewBuildingHandler() *BuildingHandler {
 		repo: repositories.NewGormBuildingRepository(),
 	}
 }
+
 func (h *BuildingHandler) AddBuilding() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var building models.Building

@@ -42,10 +42,8 @@ func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 			return
 		}
 
-		// Generate a unique ID for the customer and address
+		// Generate a unique ID for the customer
 		customer.ID = uuid.New().String()
-		customer.Address.ID = uuid.New().String()
-		customer.Address.CustomerID = customer.ID
 
 		if customer.Address.BuildingID != nil {
 			building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), *customer.Address.BuildingID)
@@ -54,18 +52,18 @@ func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get building details"})
 				return
 			}
-			// Copy address details from building
-			customer.Address.House = building.Address.House
-			customer.Address.Road = building.Address.Road
-			customer.Address.Block = building.Address.Block
-			customer.Address.Area = building.Address.Area
-			customer.Address.City = building.Address.City
+			// Use the building's address
+			customer.Address = building.Address
+			customer.Address.ID = uuid.New().String()
+			customer.Address.CustomerID = &customer.ID
 		} else {
 			// Validate address fields for individual address
 			if customer.Address.House == "" || customer.Address.Road == "" || customer.Address.Block == "" || customer.Address.Area == "" {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "All address fields (House, Road, Block, Area) are required when BuildingID is not provided"})
 				return
 			}
+			customer.Address.ID = uuid.New().String()
+			customer.Address.CustomerID = &customer.ID
 		}
 
 		err := h.repo.CreateCustomer(c.Request.Context(), &customer)
@@ -172,7 +170,30 @@ func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
 		existingCustomer.Email = updateData.Email
 		existingCustomer.Type = updateData.Type
 		existingCustomer.IdentificationNumber = updateData.IdentificationNumber
-		existingCustomer.Address = updateData.Address
+
+		// Handle address update
+		if updateData.Address.BuildingID != nil {
+			building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), *updateData.Address.BuildingID)
+			if err != nil {
+				logger.Error("Failed to get building details", zap.Error(err))
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get building details"})
+				return
+			}
+			existingCustomer.Address = building.Address
+			existingCustomer.Address.ID = uuid.New().String()
+			existingCustomer.Address.CustomerID = &existingCustomer.ID
+			existingCustomer.Address.BuildingID = updateData.Address.BuildingID
+		} else {
+			// Validate address fields for individual address
+			if updateData.Address.House == "" || updateData.Address.Road == "" || updateData.Address.Block == "" || updateData.Address.Area == "" {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "All address fields (House, Road, Block, Area) are required when BuildingID is not provided"})
+				return
+			}
+			existingCustomer.Address = updateData.Address
+			existingCustomer.Address.ID = uuid.New().String()
+			existingCustomer.Address.CustomerID = &existingCustomer.ID
+			existingCustomer.Address.BuildingID = nil
+		}
 
 		err = h.repo.UpdateCustomer(existingCustomer)
 		if err != nil {

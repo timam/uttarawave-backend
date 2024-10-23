@@ -40,18 +40,23 @@ func InitializePostgreSQL() error {
 	}
 
 	// Auto Migrate the schema
-	err = DB.AutoMigrate(
-		&models.Package{},
+	tables := []interface{}{
 		&models.Address{},
 		&models.Building{},
-		&models.Device{},
 		&models.Customer{},
+		&models.Package{},
+		&models.Device{},
 		&models.Subscription{},
 		&models.Payment{},
-		&models.Expense{})
-	if err != nil {
-		logger.Error("Failed to auto migrate schema", zap.Error(err))
-		return fmt.Errorf("failed to auto migrate schema: %v", err)
+		&models.Expense{},
+	}
+
+	for _, table := range tables {
+		if err := DB.AutoMigrate(table); err != nil {
+			logger.Error("Failed to auto migrate schema", zap.Error(err), zap.String("table", fmt.Sprintf("%T", table)))
+			return fmt.Errorf("failed to auto migrate schema for %T: %v", table, err)
+		}
+		logger.Info("Successfully migrated table", zap.String("table", fmt.Sprintf("%T", table)))
 	}
 
 	logger.Info("Successfully connected to PostgreSQL Server")

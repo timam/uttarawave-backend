@@ -2,8 +2,8 @@ package models
 
 type Address struct {
 	ID         string  `gorm:"primaryKey" json:"id"`
-	CustomerID string  `gorm:"uniqueIndex" json:"customerId"`
-	BuildingID *string `gorm:"index;foreignKey:ID" json:"buildingId,omitempty"`
+	CustomerID *string `gorm:"index" json:"customerId,omitempty"`
+	BuildingID *string `gorm:"index" json:"buildingId,omitempty"`
 
 	Flat  string `gorm:"type:varchar(50)" json:"flat,omitempty"`
 	House string `gorm:"type:varchar(50)" json:"house,omitempty"`
