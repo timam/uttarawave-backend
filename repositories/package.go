@@ -9,7 +9,7 @@ import (
 type PackageRepository interface {
 	CreatePackage(ctx context.Context, pkg *models.Package) error
 	GetPackageByID(ctx context.Context, id string) (*models.Package, error)
-	GetAllPackages(ctx context.Context, packageType string) ([]models.Package, error)
+	GetAllPackages(ctx context.Context, packageType string, page, pageSize int) ([]models.Package, int64, error)
 	DeletePackage(ctx context.Context, id string) error
 }
 
@@ -32,19 +32,27 @@ func (r *GormPackageRepository) GetPackageByID(ctx context.Context, id string) (
 	return &pkg, nil
 }
 
-func (r *GormPackageRepository) GetAllPackages(ctx context.Context, packageType string) ([]models.Package, error) {
+func (r *GormPackageRepository) GetAllPackages(ctx context.Context, packageType string, page, pageSize int) ([]models.Package, int64, error) {
 	var packages []models.Package
+	var total int64
 	query := db.DB.WithContext(ctx)
 
 	if packageType != "" {
 		query = query.Where("type = ?", packageType)
 	}
 
-	err := query.Find(&packages).Error
+	err := query.Model(&models.Package{}).Count(&total).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return packages, nil
+
+	offset := (page - 1) * pageSize
+	err = query.Offset(offset).Limit(pageSize).Find(&packages).Error
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return packages, total, nil
 }
 
 func (r *GormPackageRepository) DeletePackage(ctx context.Context, id string) error {

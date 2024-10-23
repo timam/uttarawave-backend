@@ -7,6 +7,7 @@ import (
 	"github.com/timam/uttarawave-backend/pkg/response"
 	"github.com/timam/uttarawave-backend/repositories"
 	"net/http"
+	"strconv"
 )
 
 type PackageHandler struct {
@@ -21,7 +22,7 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var pkg models.Package
 		if err := c.ShouldBindJSON(&pkg); err != nil {
-			response.Error(c, http.StatusBadRequest, "Invalid input", err.Error())
+			c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Invalid input", nil))
 			return
 		}
 
@@ -30,7 +31,7 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 
 		// Validate mandatory fields for all package types
 		if pkg.Type == "" || pkg.Name == "" || pkg.Price == 0 {
-			response.Error(c, http.StatusBadRequest, "Missing required fields", "type, name, and price are mandatory for package creation")
+			c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Missing required fields", nil))
 			return
 		}
 
@@ -38,22 +39,22 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 		switch pkg.Type {
 		case models.CableTVPackage:
 			if pkg.ChannelCount == 0 || pkg.TVCount == 0 {
-				response.Error(c, http.StatusBadRequest, "Missing required fields for Cable TV package", "channelCount and tvCount are required")
+				c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Missing required fields for Cable TV package", nil))
 				return
 			}
 		case models.InternetPackage:
 			if pkg.Bandwidth == 0 || pkg.BandwidthType == "" {
-				response.Error(c, http.StatusBadRequest, "Missing required fields for Internet package", "bandwidth and bandwidthType are required")
+				c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Missing required fields for Internet package", nil))
 				return
 			}
 		default:
-			response.Error(c, http.StatusBadRequest, "Invalid package type", "type must be either CableTV or Internet")
+			c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Invalid package type", nil))
 			return
 		}
 
 		err := h.repo.CreatePackage(c.Request.Context(), &pkg)
 		if err != nil {
-			response.Error(c, http.StatusInternalServerError, "Failed to create package", err.Error())
+			c.JSON(http.StatusInternalServerError, response.NewPackageResponse(http.StatusInternalServerError, "Failed to create package", nil))
 			return
 		}
 
@@ -65,36 +66,34 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 			responseData = response.NewInternetPackageResponse(&pkg)
 		}
 
-		response.Success(c, http.StatusCreated, "Package created successfully", responseData)
+		c.JSON(http.StatusCreated, response.NewPackageResponse(http.StatusCreated, "Package created successfully", responseData))
 	}
 }
 
 func (h *PackageHandler) GetAllPackages() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		packageType := c.Query("type")
+		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+		pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "10"))
 
-		packages, err := h.repo.GetAllPackages(c.Request.Context(), packageType)
+		packages, total, err := h.repo.GetAllPackages(c.Request.Context(), packageType, page, pageSize)
 		if err != nil {
-			response.Error(c, http.StatusInternalServerError, "Failed to fetch packages", err.Error())
+			c.JSON(http.StatusInternalServerError, response.NewPackageResponse(http.StatusInternalServerError, "Failed to fetch packages", nil))
 			return
 		}
 
-		if packageType == string(models.CableTVPackage) {
-			tvPackages := make([]response.TVPackageResponse, len(packages))
-			for i, pkg := range packages {
-				tvPackages[i] = response.NewTVPackageResponse(&pkg)
+		var responsePackages []interface{}
+		for _, pkg := range packages {
+			switch pkg.Type {
+			case models.CableTVPackage:
+				responsePackages = append(responsePackages, response.NewTVPackageResponse(&pkg))
+			case models.InternetPackage:
+				responsePackages = append(responsePackages, response.NewInternetPackageResponse(&pkg))
 			}
-			response.Success(c, http.StatusOK, "TV packages retrieved successfully", tvPackages)
-		} else if packageType == string(models.InternetPackage) {
-			internetPackages := make([]response.InternetPackageResponse, len(packages))
-			for i, pkg := range packages {
-				internetPackages[i] = response.NewInternetPackageResponse(&pkg)
-			}
-			response.Success(c, http.StatusOK, "Internet packages retrieved successfully", internetPackages)
-		} else {
-			// If no specific type is requested, return all packages
-			response.Success(c, http.StatusOK, "Packages retrieved successfully", packages)
 		}
+
+		listResponse := response.NewPackageListResponse(responsePackages, total, page, pageSize)
+		c.JSON(http.StatusOK, response.NewPackageResponse(http.StatusOK, "Packages retrieved successfully", listResponse))
 	}
 }
 

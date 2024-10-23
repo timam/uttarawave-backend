@@ -5,6 +5,19 @@ import (
 	"time"
 )
 
+type PackageResponse struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
+type PackageListResponse struct {
+	Packages []interface{} `json:"packages"`
+	Total    int64         `json:"total"`
+	Page     int           `json:"page"`
+	Size     int           `json:"size"`
+}
+
 type TVPackageResponse struct {
 	ID           string             `json:"id"`
 	Type         models.PackageType `json:"type"`
@@ -28,6 +41,23 @@ type InternetPackageResponse struct {
 	HasRealIP     bool               `json:"hasRealIP"`
 	CreatedAt     time.Time          `json:"createdAt"`
 	UpdatedAt     time.Time          `json:"updatedAt"`
+}
+
+func NewPackageResponse(status int, message string, data interface{}) PackageResponse {
+	return PackageResponse{
+		Status:  status,
+		Message: message,
+		Data:    data,
+	}
+}
+
+func NewPackageListResponse(packages []interface{}, total int64, page, size int) PackageListResponse {
+	return PackageListResponse{
+		Packages: packages,
+		Total:    total,
+		Page:     page,
+		Size:     size,
+	}
 }
 
 func NewTVPackageResponse(pkg *models.Package) TVPackageResponse {
