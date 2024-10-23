@@ -9,6 +9,7 @@ type DeviceResponse struct {
 	ID           string              `json:"id"`
 	Type         models.DeviceType   `json:"type"`
 	Status       models.DeviceStatus `json:"status"`
+	Usage        models.DeviceUsage  `json:"usage"`
 	SerialNumber string              `json:"serialNumber"`
 	Brand        string              `json:"brand"`
 	Model        string              `json:"model"`
@@ -24,6 +25,7 @@ func NewDeviceResponse(device *models.Device) DeviceResponse {
 		ID:           device.ID,
 		Type:         device.Type,
 		Status:       device.Status,
+		Usage:        device.Usage,
 		SerialNumber: device.SerialNumber,
 		Brand:        device.Brand,
 		Model:        device.Model,

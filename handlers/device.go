@@ -34,8 +34,8 @@ func (h *DeviceHandler) CreateDevice() gin.HandlerFunc {
 
 		device.ID = uuid.New().String()
 
-		if device.Brand == "" {
-			response.Error(c, http.StatusBadRequest, "Invalid input", "Brand is required")
+		if device.Brand == "" || device.Model == "" || device.SerialNumber == "" || device.Type == "" {
+			response.Error(c, http.StatusBadRequest, "Invalid input", "Brand, Model, SerialNumber, and Type are required")
 			return
 		}
 
@@ -46,6 +46,10 @@ func (h *DeviceHandler) CreateDevice() gin.HandlerFunc {
 
 		if device.Status == "" {
 			device.Status = models.InStock
+		}
+
+		if device.Usage == "" {
+			device.Usage = models.CompanyUse
 		}
 
 		err := h.repo.CreateDevice(c.Request.Context(), &device)
@@ -98,6 +102,9 @@ func (h *DeviceHandler) UpdateDevice() gin.HandlerFunc {
 		existingDevice.SerialNumber = updatedDevice.SerialNumber
 		existingDevice.Type = updatedDevice.Type
 		existingDevice.Status = updatedDevice.Status
+		existingDevice.Usage = updatedDevice.Usage
+		existingDevice.PurchasePrice = updatedDevice.PurchasePrice
+		existingDevice.PurchaseDate = updatedDevice.PurchaseDate
 
 		err = h.repo.UpdateDevice(c.Request.Context(), existingDevice)
 		if err != nil {

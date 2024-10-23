@@ -75,9 +75,11 @@ func (r *GormDeviceRepository) AssignDevice(ctx context.Context, deviceID string
 	case "Subscription":
 		updates["subscription_id"] = assignmentID
 		updates["building_id"] = nil
+		updates["usage"] = models.CustomerUse
 	case "Building":
 		updates["building_id"] = assignmentID
 		updates["subscription_id"] = nil
+		updates["usage"] = models.BuildingUse
 	default:
 		return errors.New("invalid assignment type")
 	}
