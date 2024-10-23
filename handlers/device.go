@@ -54,13 +54,13 @@ func (h *DeviceHandler) CreateDevice() gin.HandlerFunc {
 		err := h.repo.CreateDevice(c.Request.Context(), &device)
 		if err != nil {
 			logger.Error("Failed to create device", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, response.NewDeviceResponse(http.StatusInternalServerError, "Failed to create device", nil))
+			response.Error(c, http.StatusInternalServerError, "Failed to create device", err.Error())
 			return
 		}
 
 		logger.Info("Device created successfully", zap.String("id", device.ID))
 		deviceItemResponse := response.NewDeviceItemResponse(&device)
-		c.JSON(http.StatusCreated, response.NewDeviceResponse(http.StatusCreated, "Device created successfully", deviceItemResponse))
+		response.Success(c, http.StatusCreated, "Device created successfully", deviceItemResponse)
 	}
 }
 
@@ -70,12 +70,16 @@ func (h *DeviceHandler) GetDevice() gin.HandlerFunc {
 		device, err := h.repo.GetDeviceByID(c.Request.Context(), id)
 		if err != nil {
 			logger.Error("Failed to get device", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, response.NewDeviceResponse(http.StatusInternalServerError, "Failed to get device", nil))
+			response.Error(c, http.StatusInternalServerError, "Failed to get device", err.Error())
+			return
+		}
+		if device == nil {
+			response.Error(c, http.StatusNotFound, "Device not found", "No device found with the given ID")
 			return
 		}
 
 		deviceItemResponse := response.NewDeviceItemResponse(device)
-		c.JSON(http.StatusOK, response.NewDeviceResponse(http.StatusOK, "Device retrieved successfully", deviceItemResponse))
+		response.Success(c, http.StatusOK, "Device retrieved successfully", deviceItemResponse)
 	}
 }
 
@@ -108,12 +112,12 @@ func (h *DeviceHandler) UpdateDevice() gin.HandlerFunc {
 		err = h.repo.UpdateDevice(c.Request.Context(), existingDevice)
 		if err != nil {
 			logger.Error("Failed to update device", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, response.NewDeviceResponse(http.StatusInternalServerError, "Failed to update device", nil))
+			response.Error(c, http.StatusInternalServerError, "Failed to update device", err.Error())
 			return
 		}
 
 		deviceItemResponse := response.NewDeviceItemResponse(existingDevice)
-		c.JSON(http.StatusOK, response.NewDeviceResponse(http.StatusOK, "Device updated successfully", deviceItemResponse))
+		response.Success(c, http.StatusOK, "Device updated successfully", deviceItemResponse)
 	}
 }
 
@@ -123,11 +127,11 @@ func (h *DeviceHandler) DeleteDevice() gin.HandlerFunc {
 		err := h.repo.DeleteDevice(c.Request.Context(), id)
 		if err != nil {
 			logger.Error("Failed to delete device", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, response.NewDeviceResponse(http.StatusInternalServerError, "Failed to delete device", nil))
+			response.Error(c, http.StatusInternalServerError, "Failed to delete device", err.Error())
 			return
 		}
 
-		c.JSON(http.StatusOK, response.NewDeviceResponse(http.StatusOK, "Device deleted successfully", nil))
+		response.Success(c, http.StatusOK, "Device deleted successfully", nil)
 	}
 }
 
@@ -139,12 +143,12 @@ func (h *DeviceHandler) GetAllDevices() gin.HandlerFunc {
 		devices, totalCount, err := h.repo.GetAllDevices(c.Request.Context(), page, pageSize)
 		if err != nil {
 			logger.Error("Failed to get all devices", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, response.NewDeviceResponse(http.StatusInternalServerError, "Failed to get all devices", nil))
+			response.Error(c, http.StatusInternalServerError, "Failed to get all devices", err.Error())
 			return
 		}
 
-		deviceListResponse := response.NewDeviceListResponse(devices, totalCount, page, pageSize)
-		c.JSON(http.StatusOK, response.NewDeviceResponse(http.StatusOK, "Devices retrieved successfully", deviceListResponse))
+		deviceListResponse := response.NewDeviceListResponse(devices, int64(totalCount), page, pageSize)
+		response.Success(c, http.StatusOK, "Devices retrieved successfully", deviceListResponse)
 	}
 }
 
