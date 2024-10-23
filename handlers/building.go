@@ -19,9 +19,7 @@ func NewBuildingHandler() *BuildingHandler {
 		repo: repositories.NewGormBuildingRepository(),
 	}
 }
-
 func (h *BuildingHandler) AddBuilding() gin.HandlerFunc {
-	//TODO: Prevent duplicate building creation
 	return func(c *gin.Context) {
 		var building models.Building
 
@@ -32,14 +30,16 @@ func (h *BuildingHandler) AddBuilding() gin.HandlerFunc {
 		}
 
 		// Validate required fields
-		if building.Name == "" || building.Area == "" || building.Block == "" || building.Road == "" || building.House == "" {
+		if building.Name == "" || building.Address.Area == "" || building.Address.Block == "" || building.Address.Road == "" || building.Address.House == "" {
 			logger.Warn("Missing required fields")
 			c.JSON(http.StatusBadRequest, gin.H{"error": "All fields (Name, Area, Block, Road, House) are required"})
 			return
 		}
 
-		// Generate a unique ID for the building
+		// Generate a unique ID for the building and address
 		building.ID = uuid.New().String()
+		building.Address.ID = uuid.New().String()
+		building.Address.BuildingID = &building.ID
 
 		err := h.repo.CreateBuilding(c.Request.Context(), &building)
 		if err != nil {
@@ -51,8 +51,6 @@ func (h *BuildingHandler) AddBuilding() gin.HandlerFunc {
 		logger.Info("Building created successfully",
 			zap.String("id", building.ID),
 			zap.String("name", building.Name),
-			zap.Bool("hasInternetService", building.HasInternetService),
-			zap.Bool("hasCableTVService", building.HasCableTVService),
 		)
 
 		c.JSON(http.StatusCreated, gin.H{"message": "Building created successfully", "building": building})

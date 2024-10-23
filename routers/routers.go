@@ -80,14 +80,14 @@ func InitRouter() *gin.Engine {
 	}
 
 	customerRepo := repositories.NewGormCustomerRepository()
-	customerHandler := handlers.NewCustomerHandler(customerRepo, buildingRepo, subscriptionRepo, deviceRepo)
+	customerHandler := handlers.NewCustomerHandler(customerRepo, buildingRepo)
 	customerRoutes := apiV1.Group("/customers")
 	{
 		customerRoutes.POST("", customerHandler.CreateCustomer())
 		customerRoutes.GET("", customerHandler.GetCustomer())
 		customerRoutes.PUT("/:id", customerHandler.UpdateCustomer())
 		customerRoutes.DELETE("", customerHandler.DeleteCustomer())
-		//customerRoutes.GET("/full-details", customerHandler.GetAllCustomersFullDetails())
+		customerRoutes.GET("/all", customerHandler.GetAllCustomers())
 	}
 
 	paymentRepo := repositories.NewGormPaymentRepository()

@@ -12,7 +12,6 @@ type BuildingRepository interface {
 	UpdateBuilding(ctx context.Context, id string, updates map[string]interface{}) error
 	GetBuildingByID(ctx context.Context, id string) (*models.Building, error)
 	GetAllBuildings(ctx context.Context) ([]models.Building, error)
-	GetBuildingDetails(ctx context.Context, id string) (*models.Building, error)
 }
 
 type GormBuildingRepository struct{}
@@ -35,7 +34,7 @@ func (r *GormBuildingRepository) UpdateBuilding(ctx context.Context, id string, 
 
 func (r *GormBuildingRepository) GetBuildingByID(ctx context.Context, id string) (*models.Building, error) {
 	var building models.Building
-	if err := db.DB.WithContext(ctx).First(&building, "id = ?", id).Error; err != nil {
+	if err := db.DB.WithContext(ctx).Preload("Address").First(&building, "id = ?", id).Error; err != nil {
 		return nil, err
 	}
 	return &building, nil
@@ -43,16 +42,8 @@ func (r *GormBuildingRepository) GetBuildingByID(ctx context.Context, id string)
 
 func (r *GormBuildingRepository) GetAllBuildings(ctx context.Context) ([]models.Building, error) {
 	var buildings []models.Building
-	if err := db.DB.WithContext(ctx).Find(&buildings).Error; err != nil {
+	if err := db.DB.WithContext(ctx).Preload("Address").Find(&buildings).Error; err != nil {
 		return nil, err
 	}
 	return buildings, nil
-}
-
-func (r *GormBuildingRepository) GetBuildingDetails(ctx context.Context, id string) (*models.Building, error) {
-	var building models.Building
-	if err := db.DB.WithContext(ctx).First(&building, "id = ?", id).Error; err != nil {
-		return nil, err
-	}
-	return &building, nil
 }

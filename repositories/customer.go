@@ -31,7 +31,7 @@ func (r *GormCustomerRepository) CreateCustomer(ctx context.Context, customer *m
 
 func (r *GormCustomerRepository) GetCustomer(id string) (*models.Customer, error) {
 	var customer models.Customer
-	result := db.DB.First(&customer, "id = ?", id)
+	result := db.DB.Preload("Address").First(&customer, "id = ?", id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			logger.Warn("Customer not found in database", zap.String("id", id))
@@ -46,7 +46,7 @@ func (r *GormCustomerRepository) GetCustomer(id string) (*models.Customer, error
 
 func (r *GormCustomerRepository) GetCustomerByMobile(mobile string) (*models.Customer, error) {
 	var customer models.Customer
-	result := db.DB.Where("mobile = ?", mobile).First(&customer)
+	result := db.DB.Preload("Address").Where("mobile = ?", mobile).First(&customer)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			logger.Warn("Customer not found", zap.String("mobile", mobile))
@@ -69,7 +69,7 @@ func (r *GormCustomerRepository) GetCustomersPaginated(page, pageSize int) ([]mo
 		return nil, 0, err
 	}
 
-	if err := db.DB.Offset(offset).Limit(pageSize).Find(&customers).Error; err != nil {
+	if err := db.DB.Preload("Address").Offset(offset).Limit(pageSize).Find(&customers).Error; err != nil {
 		return nil, 0, err
 	}
 

@@ -1,40 +1,28 @@
 package handlers
 
 import (
-	"net/http"
-	"strconv"
-	"time"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/timam/uttarawave-backend/models"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"github.com/timam/uttarawave-backend/repositories"
 	"go.uber.org/zap"
+	"net/http"
+	"strconv"
 )
 
 type CustomerHandler struct {
-	repo             repositories.CustomerRepository
-	buildingRepo     repositories.BuildingRepository
-	subscriptionRepo repositories.SubscriptionRepository
-	deviceRepo       repositories.DeviceRepository
+	repo         repositories.CustomerRepository
+	buildingRepo repositories.BuildingRepository
 }
 
 func NewCustomerHandler(
 	cr repositories.CustomerRepository,
-	br repositories.BuildingRepository,
-	sr repositories.SubscriptionRepository,
-	dr repositories.DeviceRepository) *CustomerHandler {
+	br repositories.BuildingRepository) *CustomerHandler {
 	return &CustomerHandler{
-		repo:             cr,
-		buildingRepo:     br,
-		subscriptionRepo: sr,
-		deviceRepo:       dr,
+		repo:         cr,
+		buildingRepo: br,
 	}
-}
-
-func generateUniqueID() string {
-	return uuid.New().String()
 }
 
 func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
@@ -54,41 +42,33 @@ func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 			return
 		}
 
-		var buildingDetails *models.Building
-		var err error
+		// Generate a unique ID for the customer and address
+		customer.ID = uuid.New().String()
+		customer.Address.ID = uuid.New().String()
+		customer.Address.CustomerID = customer.ID
 
-		// Check if BuildingID is provided
-		if customer.BuildingID != "" {
-			// Customer is from an existing building
-			if customer.Flat == "" {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Flat is required when BuildingID is provided"})
-				return
-			}
-			// Get building details
-			buildingDetails, err = h.buildingRepo.GetBuildingDetails(c.Request.Context(), customer.BuildingID)
+		if customer.Address.BuildingID != nil {
+			building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), *customer.Address.BuildingID)
 			if err != nil {
 				logger.Error("Failed to get building details", zap.Error(err))
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get building details"})
 				return
 			}
-			// Set address fields from building details
-			customer.House = buildingDetails.House
-			customer.Road = buildingDetails.Road
-			customer.Block = buildingDetails.Block
-			customer.Area = buildingDetails.Area
+			// Copy address details from building
+			customer.Address.House = building.Address.House
+			customer.Address.Road = building.Address.Road
+			customer.Address.Block = building.Address.Block
+			customer.Address.Area = building.Address.Area
+			customer.Address.City = building.Address.City
 		} else {
-			// Customer is not from an existing building
-			// Validate address fields
-			if customer.House == "" || customer.Road == "" || customer.Block == "" || customer.Area == "" {
+			// Validate address fields for individual address
+			if customer.Address.House == "" || customer.Address.Road == "" || customer.Address.Block == "" || customer.Address.Area == "" {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "All address fields (House, Road, Block, Area) are required when BuildingID is not provided"})
 				return
 			}
 		}
 
-		// Generate a unique ID for the customer
-		customer.ID = generateUniqueID()
-
-		err = h.repo.CreateCustomer(c.Request.Context(), &customer)
+		err := h.repo.CreateCustomer(c.Request.Context(), &customer)
 		if err != nil {
 			logger.Error("Failed to save customer data", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save customer data"})
@@ -100,12 +80,7 @@ func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 			zap.String("mobile", customer.Mobile),
 		)
 
-		response := gin.H{
-			"message":  "Customer created successfully",
-			"customer": customer,
-		}
-
-		c.JSON(http.StatusCreated, response)
+		c.JSON(http.StatusCreated, gin.H{"message": "Customer created successfully", "customer": customer})
 	}
 }
 
@@ -129,41 +104,9 @@ func (h *CustomerHandler) GetCustomer() gin.HandlerFunc {
 			return
 		}
 
-		customerData := gin.H{
-			"id":     customer.ID,
-			"mobile": customer.Mobile,
-			"name":   customer.Name,
-		}
-
-		if customer.BuildingID != "" {
-			building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), customer.BuildingID)
-			if err != nil {
-				logger.Error("Failed to get building data", zap.Error(err))
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get building data"})
-				return
-			}
-			customerData["address"] = gin.H{
-				"flat":  customer.Flat,
-				"house": building.House,
-				"road":  building.Road,
-				"block": building.Block,
-				"area":  building.Area,
-			}
-		} else {
-			customerData["address"] = gin.H{
-				"flat":  customer.Flat,
-				"house": customer.House,
-				"road":  customer.Road,
-				"block": customer.Block,
-				"area":  customer.Area,
-			}
-		}
-
-		logger.Info("Customer retrieved successfully", zap.String("mobile", customer.Mobile))
-		c.JSON(http.StatusOK, customerData)
+		c.JSON(http.StatusOK, customer)
 	}
 }
-
 func (h *CustomerHandler) GetAllCustomers() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -176,48 +119,14 @@ func (h *CustomerHandler) GetAllCustomers() gin.HandlerFunc {
 			return
 		}
 
-		var processedCustomers []gin.H
-		for _, customer := range customers {
-			customerData := gin.H{
-				"id":     customer.ID,
-				"mobile": customer.Mobile,
-				"name":   customer.Name,
-			}
-
-			if customer.BuildingID != "" {
-				building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), customer.BuildingID)
-				if err != nil {
-					logger.Error("Failed to get building data", zap.Error(err))
-					continue
-				}
-				customerData["address"] = gin.H{
-					"flat":  customer.Flat,
-					"house": building.House,
-					"road":  building.Road,
-					"block": building.Block,
-					"area":  building.Area,
-				}
-			} else {
-				customerData["address"] = gin.H{
-					"flat":  customer.Flat,
-					"house": customer.House,
-					"road":  customer.Road,
-					"block": customer.Block,
-					"area":  customer.Area,
-				}
-			}
-
-			processedCustomers = append(processedCustomers, customerData)
-		}
-
 		response := gin.H{
-			"customers":  processedCustomers,
+			"customers":  customers,
 			"totalCount": totalCount,
 			"page":       page,
 			"pageSize":   pageSize,
 		}
 
-		logger.Info("Retrieved customers", zap.Int("count", len(processedCustomers)), zap.Int("page", page), zap.Int("pageSize", pageSize))
+		logger.Info("Retrieved customers", zap.Int("count", len(customers)), zap.Int("page", page), zap.Int("pageSize", pageSize))
 		c.JSON(http.StatusOK, response)
 	}
 }
@@ -233,18 +142,16 @@ func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
 			return
 		}
 
-		var updateData map[string]interface{}
+		var updateData models.Customer
 		if err := c.ShouldBindJSON(&updateData); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		logger.Info("Update data received", zap.Any("updateData", updateData))
 
-		// Retrieve the existing customer by ID
 		existingCustomer, err := h.repo.GetCustomer(id)
 		if err != nil {
-			logger.Error("Failed to find customer by ID", zap.Error(err), zap.String("id", id))
+			logger.Error("Failed to find customer", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to find customer"})
 			return
 		}
@@ -253,37 +160,19 @@ func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Customer not found"})
 			return
 		}
-		logger.Info("Existing customer found", zap.String("id", existingCustomer.ID), zap.String("name", existingCustomer.Name))
 
 		// Prevent updating the mobile number
-		if _, exists := updateData["mobile"]; exists {
+		if updateData.Mobile != "" && updateData.Mobile != existingCustomer.Mobile {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Mobile number cannot be updated"})
 			return
 		}
 
-		// Update fields based on provided data
-		if name, ok := updateData["name"].(string); ok {
-			existingCustomer.Name = name
-		}
-		if buildingId, ok := updateData["buildingId"].(string); ok {
-			existingCustomer.BuildingID = buildingId
-		}
-		if flat, ok := updateData["flat"].(string); ok {
-			existingCustomer.Flat = flat
-		}
-		if house, ok := updateData["house"].(string); ok {
-			existingCustomer.House = house
-		}
-		if road, ok := updateData["road"].(string); ok {
-			existingCustomer.Road = road
-		}
-		if block, ok := updateData["block"].(string); ok {
-			existingCustomer.Block = block
-		}
-		if area, ok := updateData["area"].(string); ok {
-			existingCustomer.Area = area
-		}
-		existingCustomer.UpdatedAt = time.Now()
+		// Update fields
+		existingCustomer.Name = updateData.Name
+		existingCustomer.Email = updateData.Email
+		existingCustomer.Type = updateData.Type
+		existingCustomer.IdentificationNumber = updateData.IdentificationNumber
+		existingCustomer.Address = updateData.Address
 
 		err = h.repo.UpdateCustomer(existingCustomer)
 		if err != nil {
@@ -326,74 +215,3 @@ func (h *CustomerHandler) DeleteCustomer() gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{"message": "Customer deleted successfully"})
 	}
 }
-
-//func (h *CustomerHandler) GetAllCustomersFullDetails() gin.HandlerFunc {
-//	return func(c *gin.Context) {
-//		page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-//		pageSize, _ := strconv.Atoi(c.DefaultQuery("pageSize", "50"))
-//
-//		customers, totalCount, err := h.repo.GetCustomersPaginated(page, pageSize)
-//		if err != nil {
-//			logger.Error("Failed to get customers", zap.Error(err))
-//			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get customers"})
-//			return
-//		}
-//
-//		var fullCustomersDetails []gin.H
-//		for _, customer := range customers {
-//			subscriptions, err := h.subscriptionRepo.GetSubscriptionsByCustomerID(c.Request.Context(), customer.ID)
-//			if err != nil {
-//				logger.Error("Failed to get subscriptions", zap.Error(err), zap.String("customerID", customer.ID))
-//				continue
-//			}
-//
-//			var fullSubscriptions []gin.H
-//			for _, sub := range subscriptions {
-//				device, err := h.deviceRepo.GetDeviceBySubscriptionID(c.Request.Context(), sub.ID)
-//				if err != nil {
-//					logger.Error("Failed to get device", zap.Error(err), zap.String("subscriptionID", sub.ID))
-//					continue
-//				}
-//
-//				fullSub := gin.H{
-//					"subscription": sub,
-//					"device":       device,
-//				}
-//				fullSubscriptions = append(fullSubscriptions, fullSub)
-//			}
-//
-//			var buildingDetails gin.H
-//			if customer.BuildingID != "" {
-//				building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), customer.BuildingID)
-//				if err != nil {
-//					logger.Error("Failed to get building details", zap.Error(err), zap.String("buildingID", customer.BuildingID))
-//				} else {
-//					buildingDetails = gin.H{
-//						"id":    building.ID,
-//						"name":  building.Name,
-//						"house": building.House,
-//						"road":  building.Road,
-//						"block": building.Block,
-//						"area":  building.Area,
-//					}
-//				}
-//			}
-//
-//			customerDetails := gin.H{
-//				"customer":      customer,
-//				"subscriptions": fullSubscriptions,
-//				"building":      buildingDetails,
-//			}
-//			fullCustomersDetails = append(fullCustomersDetails, customerDetails)
-//		}
-//
-//		response := gin.H{
-//			"customers":  fullCustomersDetails,
-//			"totalCount": totalCount,
-//			"page":       page,
-//			"pageSize":   pageSize,
-//		}
-//
-//		c.JSON(http.StatusOK, response)
-//	}
-//}
