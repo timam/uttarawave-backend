@@ -6,7 +6,7 @@ type DeviceType string
 
 const (
 	ONU    DeviceType = "ONU"
-	Switch DeviceType = "Switch"
+	Switch DeviceType = "SWITCH"
 	OLT    DeviceType = "OLT"
 	Router DeviceType = "ROUTER"
 	Server DeviceType = "SERVER"
