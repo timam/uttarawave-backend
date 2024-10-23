@@ -6,6 +6,17 @@ import (
 )
 
 type DeviceResponse struct {
+	Status  int         `json:"status"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
+}
+
+type DeviceListResponse struct {
+	Items      []DeviceItemResponse `json:"items"`
+	Pagination PaginationInfo       `json:"pagination"`
+}
+
+type DeviceItemResponse struct {
 	ID           string              `json:"id"`
 	Type         models.DeviceType   `json:"type"`
 	Status       models.DeviceStatus `json:"status"`
@@ -20,8 +31,16 @@ type DeviceResponse struct {
 	UpdatedAt    time.Time           `json:"updatedAt"`
 }
 
-func NewDeviceResponse(device *models.Device) DeviceResponse {
-	response := DeviceResponse{
+func NewDeviceResponse(status int, message string, data interface{}) DeviceResponse {
+	return DeviceResponse{
+		Status:  status,
+		Message: message,
+		Data:    data,
+	}
+}
+
+func NewDeviceItemResponse(device *models.Device) DeviceItemResponse {
+	response := DeviceItemResponse{
 		ID:           device.ID,
 		Type:         device.Type,
 		Status:       device.Status,
@@ -45,23 +64,18 @@ func NewDeviceResponse(device *models.Device) DeviceResponse {
 	return response
 }
 
-type DeviceListResponse struct {
-	Devices []DeviceResponse `json:"devices"`
-	Total   int64            `json:"total"`
-	Page    int              `json:"page"`
-	Size    int              `json:"size"`
-}
-
 func NewDeviceListResponse(devices []models.Device, total int64, page, size int) DeviceListResponse {
-	deviceResponses := make([]DeviceResponse, len(devices))
+	deviceResponses := make([]DeviceItemResponse, len(devices))
 	for i, device := range devices {
-		deviceResponses[i] = NewDeviceResponse(&device)
+		deviceResponses[i] = NewDeviceItemResponse(&device)
 	}
 
 	return DeviceListResponse{
-		Devices: deviceResponses,
-		Total:   total,
-		Page:    page,
-		Size:    size,
+		Items: deviceResponses,
+		Pagination: PaginationInfo{
+			Total: total,
+			Page:  page,
+			Size:  size,
+		},
 	}
 }

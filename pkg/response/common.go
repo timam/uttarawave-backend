@@ -16,6 +16,12 @@ type ErrorResponse struct {
 	Error   string `json:"error"`
 }
 
+type PaginationInfo struct {
+	Total int64 `json:"total"`
+	Page  int   `json:"page"`
+	Size  int   `json:"size"`
+}
+
 func Success(c *gin.Context, statusCode int, message string, data interface{}) {
 	c.JSON(statusCode, SuccessResponse{
 		Status:  statusCode,

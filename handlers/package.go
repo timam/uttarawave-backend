@@ -93,7 +93,8 @@ func (h *PackageHandler) GetAllPackages() gin.HandlerFunc {
 		}
 
 		listResponse := response.NewPackageListResponse(responsePackages, total, page, pageSize)
-		c.JSON(http.StatusOK, response.NewPackageResponse(http.StatusOK, "Packages retrieved successfully", listResponse))
+		data := gin.H{"packages": listResponse}
+		c.JSON(http.StatusOK, response.NewPackageResponse(http.StatusOK, "Packages retrieved successfully", data))
 	}
 }
 

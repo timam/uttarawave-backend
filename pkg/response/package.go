@@ -12,10 +12,8 @@ type PackageResponse struct {
 }
 
 type PackageListResponse struct {
-	Packages []interface{} `json:"packages"`
-	Total    int64         `json:"total"`
-	Page     int           `json:"page"`
-	Size     int           `json:"size"`
+	Items      []interface{}  `json:"items"`
+	Pagination PaginationInfo `json:"pagination"`
 }
 
 type TVPackageResponse struct {
@@ -53,13 +51,14 @@ func NewPackageResponse(status int, message string, data interface{}) PackageRes
 
 func NewPackageListResponse(packages []interface{}, total int64, page, size int) PackageListResponse {
 	return PackageListResponse{
-		Packages: packages,
-		Total:    total,
-		Page:     page,
-		Size:     size,
+		Items: packages,
+		Pagination: PaginationInfo{
+			Total: total,
+			Page:  page,
+			Size:  size,
+		},
 	}
 }
-
 func NewTVPackageResponse(pkg *models.Package) TVPackageResponse {
 	return TVPackageResponse{
 		ID:           pkg.ID,
