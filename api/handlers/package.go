@@ -38,12 +38,12 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 		// Validate package type and required fields
 		switch pkg.Type {
 		case models.CableTVPackage:
-			if pkg.ChannelCount == 0 || pkg.TVCount == 0 {
+			if pkg.ChannelCount == nil || *pkg.ChannelCount == 0 || pkg.TVCount == nil || *pkg.TVCount == 0 {
 				c.JSON(http.StatusBadRequest, response2.NewPackageResponse(http.StatusBadRequest, "Missing required fields for Cable TV package", nil))
 				return
 			}
 		case models.InternetPackage:
-			if pkg.Bandwidth == 0 || pkg.BandwidthType == "" {
+			if pkg.Bandwidth == nil || *pkg.Bandwidth == 0 || pkg.BandwidthType == nil || *pkg.BandwidthType == "" {
 				c.JSON(http.StatusBadRequest, response2.NewPackageResponse(http.StatusBadRequest, "Missing required fields for Internet package", nil))
 				return
 			}

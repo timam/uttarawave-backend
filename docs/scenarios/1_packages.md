@@ -80,3 +80,10 @@ Error Handling Test Cases:
 3. Given an admin attempts to delete a non-existent package
    When they provide an invalid package ID
    Then the system returns a 404 Not Found error
+
+
+---
+Create a Cable TV Package
+```shell
+
+```

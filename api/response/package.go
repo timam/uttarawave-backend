@@ -66,8 +66,8 @@ func NewTVPackageResponse(pkg *models.Package) TVPackageResponse {
 		Name:         pkg.Name,
 		Price:        pkg.Price,
 		IsActive:     pkg.IsActive,
-		ChannelCount: pkg.ChannelCount,
-		TVCount:      pkg.TVCount,
+		ChannelCount: derefInt(pkg.ChannelCount),
+		TVCount:      derefInt(pkg.TVCount),
 		CreatedAt:    pkg.CreatedAt,
 		UpdatedAt:    pkg.UpdatedAt,
 	}
@@ -80,10 +80,31 @@ func NewInternetPackageResponse(pkg *models.Package) InternetPackageResponse {
 		Name:          pkg.Name,
 		Price:         pkg.Price,
 		IsActive:      pkg.IsActive,
-		Bandwidth:     pkg.Bandwidth,
-		BandwidthType: string(pkg.BandwidthType),
-		HasRealIP:     pkg.HasRealIP,
+		Bandwidth:     derefInt(pkg.Bandwidth),
+		BandwidthType: derefBandwidthType(pkg.BandwidthType),
+		HasRealIP:     derefBool(pkg.HasRealIP),
 		CreatedAt:     pkg.CreatedAt,
 		UpdatedAt:     pkg.UpdatedAt,
 	}
+}
+
+func derefInt(ptr *int) int {
+	if ptr != nil {
+		return *ptr
+	}
+	return 0
+}
+
+func derefBandwidthType(ptr *models.BandwidthType) string {
+	if ptr != nil {
+		return string(*ptr)
+	}
+	return ""
+}
+
+func derefBool(ptr *bool) bool {
+	if ptr != nil {
+		return *ptr
+	}
+	return false
 }

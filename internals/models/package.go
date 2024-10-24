@@ -23,13 +23,12 @@ type Package struct {
 	Price    float64     `json:"price"`
 	IsActive bool        `json:"isActive"`
 
-	Bandwidth     int           `json:"bandwidth"`
-	BandwidthType BandwidthType `json:"bandwidthType"`
-	HasRealIP     bool          `json:"hasRealIP"`
+	Bandwidth     *int           `json:"bandwidth,omitempty"`
+	BandwidthType *BandwidthType `json:"bandwidthType,omitempty"`
+	HasRealIP     *bool          `json:"hasRealIP,omitempty"`
+	ChannelCount  *int           `json:"channelCount,omitempty"`
 
-	ChannelCount int `json:"channelCount,omitempty"`
-	TVCount      int `json:"tvCount,omitempty"`
-
+	TVCount   *int      `json:"tvCount,omitempty"`
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"createdAt"`
 	UpdatedAt time.Time `gorm:"autoUpdateTime" json:"updatedAt"`
 }
