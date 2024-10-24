@@ -56,6 +56,21 @@ func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 			return
 		}
 
+		// Validate customer type
+		if customerInput.Type == "" {
+			err := errors.New("customer type is required")
+			logger.Warn("Missing customer type")
+			response.Error(c, http.StatusBadRequest, "Customer type is required", err.Error())
+			return
+		}
+
+		if customerInput.Type != string(models.Individual) && customerInput.Type != string(models.Business) {
+			err := errors.New("invalid customer type")
+			logger.Warn("Invalid customer type", zap.String("type", customerInput.Type))
+			response.Error(c, http.StatusBadRequest, "Invalid customer type", err.Error())
+			return
+		}
+
 		customer := models.Customer{
 			ID:                   uuid.New().String(),
 			Mobile:               customerInput.Mobile,
