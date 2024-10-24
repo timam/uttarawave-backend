@@ -3,19 +3,19 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/timam/uttarawave-backend/models"
+	"github.com/timam/uttarawave-backend/internals/models"
+	repositories2 "github.com/timam/uttarawave-backend/internals/repositories"
 	"github.com/timam/uttarawave-backend/pkg/logger"
-	"github.com/timam/uttarawave-backend/repositories"
 	"go.uber.org/zap"
 	"net/http"
 )
 
 type InvoiceHandler struct {
-	invoiceRepo      repositories.InvoiceRepository
-	subscriptionRepo repositories.SubscriptionRepository
+	invoiceRepo      repositories2.InvoiceRepository
+	subscriptionRepo repositories2.SubscriptionRepository
 }
 
-func NewInvoiceHandler(ir repositories.InvoiceRepository, sr repositories.SubscriptionRepository) *InvoiceHandler {
+func NewInvoiceHandler(ir repositories2.InvoiceRepository, sr repositories2.SubscriptionRepository) *InvoiceHandler {
 	return &InvoiceHandler{
 		invoiceRepo:      ir,
 		subscriptionRepo: sr,

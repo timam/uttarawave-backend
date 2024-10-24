@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"context"
-	"github.com/timam/uttarawave-backend/models"
+	"github.com/timam/uttarawave-backend/internals/models"
 	"github.com/timam/uttarawave-backend/pkg/db"
 	"time"
 )

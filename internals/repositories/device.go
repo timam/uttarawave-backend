@@ -3,7 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
-	"github.com/timam/uttarawave-backend/models"
+	"github.com/timam/uttarawave-backend/internals/models"
 	"github.com/timam/uttarawave-backend/pkg/db"
 	"gorm.io/gorm"
 	"time"

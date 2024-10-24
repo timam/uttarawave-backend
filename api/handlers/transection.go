@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/timam/uttarawave-backend/models"
+	"github.com/timam/uttarawave-backend/internals/models"
 	"time"
 )
 

@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/timam/uttarawave-backend/api/routers"
 	"net/http"
 	"time"
 
 	"github.com/spf13/viper"
 	"github.com/timam/uttarawave-backend/pkg/logger"
-	"github.com/timam/uttarawave-backend/routers"
 	"go.uber.org/zap"
 )
 

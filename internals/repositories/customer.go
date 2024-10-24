@@ -3,7 +3,7 @@ package repositories
 import (
 	"context"
 	"errors"
-	"github.com/timam/uttarawave-backend/models"
+	"github.com/timam/uttarawave-backend/internals/models"
 	"github.com/timam/uttarawave-backend/pkg/db"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.uber.org/zap"

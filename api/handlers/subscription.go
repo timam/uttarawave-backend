@@ -3,9 +3,9 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/timam/uttarawave-backend/models"
+	"github.com/timam/uttarawave-backend/internals/models"
+	repositories2 "github.com/timam/uttarawave-backend/internals/repositories"
 	"github.com/timam/uttarawave-backend/pkg/logger"
-	"github.com/timam/uttarawave-backend/repositories"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
@@ -13,17 +13,17 @@ import (
 )
 
 type SubscriptionHandler struct {
-	repo        repositories.SubscriptionRepository
-	packageRepo repositories.PackageRepository
-	deviceRepo  repositories.DeviceRepository
-	invoiceRepo repositories.InvoiceRepository
+	repo        repositories2.SubscriptionRepository
+	packageRepo repositories2.PackageRepository
+	deviceRepo  repositories2.DeviceRepository
+	invoiceRepo repositories2.InvoiceRepository
 }
 
 func NewSubscriptionHandler(
-	repo repositories.SubscriptionRepository,
-	packageRepo repositories.PackageRepository,
-	deviceRepo repositories.DeviceRepository,
-	invoiceRepo repositories.InvoiceRepository) *SubscriptionHandler {
+	repo repositories2.SubscriptionRepository,
+	packageRepo repositories2.PackageRepository,
+	deviceRepo repositories2.DeviceRepository,
+	invoiceRepo repositories2.InvoiceRepository) *SubscriptionHandler {
 	return &SubscriptionHandler{
 		repo:        repo,
 		packageRepo: packageRepo,

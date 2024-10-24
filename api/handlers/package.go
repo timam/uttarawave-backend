@@ -3,9 +3,9 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/timam/uttarawave-backend/internals/models"
+	"github.com/timam/uttarawave-backend/internals/repositories"
 	"github.com/timam/uttarawave-backend/internals/response"
-	"github.com/timam/uttarawave-backend/models"
-	"github.com/timam/uttarawave-backend/repositories"
 	"net/http"
 	"strconv"
 )

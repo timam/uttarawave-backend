@@ -4,23 +4,23 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	models2 "github.com/timam/uttarawave-backend/internals/models"
+	repositories2 "github.com/timam/uttarawave-backend/internals/repositories"
 	"github.com/timam/uttarawave-backend/internals/response"
-	"github.com/timam/uttarawave-backend/models"
 	"github.com/timam/uttarawave-backend/pkg/logger"
-	"github.com/timam/uttarawave-backend/repositories"
 	"go.uber.org/zap"
 	"net/http"
 	"strconv"
 )
 
 type CustomerHandler struct {
-	repo         repositories.CustomerRepository
-	buildingRepo repositories.BuildingRepository
+	repo         repositories2.CustomerRepository
+	buildingRepo repositories2.BuildingRepository
 }
 
 func NewCustomerHandler(
-	cr repositories.CustomerRepository,
-	br repositories.BuildingRepository) *CustomerHandler {
+	cr repositories2.CustomerRepository,
+	br repositories2.BuildingRepository) *CustomerHandler {
 	return &CustomerHandler{
 		repo:         cr,
 		buildingRepo: br,
@@ -64,21 +64,21 @@ func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 			return
 		}
 
-		if customerInput.Type != string(models.Individual) && customerInput.Type != string(models.Business) {
+		if customerInput.Type != string(models2.Individual) && customerInput.Type != string(models2.Business) {
 			err := errors.New("invalid customer type")
 			logger.Warn("Invalid customer type", zap.String("type", customerInput.Type))
 			response.Error(c, http.StatusBadRequest, "Invalid customer type", err.Error())
 			return
 		}
 
-		customer := models.Customer{
+		customer := models2.Customer{
 			ID:                   uuid.New().String(),
 			Mobile:               customerInput.Mobile,
 			Name:                 customerInput.Name,
 			Email:                customerInput.Email,
-			Type:                 models.CustomerType(customerInput.Type),
+			Type:                 models2.CustomerType(customerInput.Type),
 			IdentificationNumber: customerInput.IdentificationNumber,
-			Address: models.Address{
+			Address: models2.Address{
 				ID:    uuid.New().String(),
 				Flat:  customerInput.Flat,
 				House: customerInput.House,
@@ -160,7 +160,7 @@ func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
 			return
 		}
 
-		var updateData models.Customer
+		var updateData models2.Customer
 		if err := c.ShouldBindJSON(&updateData); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
 			response.Error(c, http.StatusBadRequest, "Invalid input", err.Error())
