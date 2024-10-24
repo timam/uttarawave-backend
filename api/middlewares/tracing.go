@@ -27,20 +27,17 @@ func TracingLoggerMiddleware() gin.HandlerFunc {
 		traceID := span.SpanContext().TraceID().String()
 		c.Header("X-Trace-ID", traceID)
 
-		// Create a new logger with trace information for this request
+		// Obtain the request-scoped logger
 		requestLogger := logger.GetLogger().With(
 			zap.String("traceID", traceID),
 			zap.String("spanID", span.SpanContext().SpanID().String()),
 		)
 
-		// Use a defer function to reset the logger after the request is completed
-		defer logger.SetLogger(logger.GetLogger())
-
-		// Set the request-scoped logger
-		logger.SetLogger(requestLogger)
+		// Ensure the logger with trace info is contextual
+		ctx = logger.WithLogger(ctx, requestLogger)
 
 		// Log the incoming request
-		logger.Info("Request received",
+		requestLogger.Info("Request received",
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
 			zap.String("clientIP", c.ClientIP()),
@@ -48,12 +45,11 @@ func TracingLoggerMiddleware() gin.HandlerFunc {
 
 		// Use the new context for the rest of the request
 		c.Request = c.Request.WithContext(ctx)
-
 		c.Next()
 
 		// Log the request completion
 		duration := time.Since(start)
-		logger.Info("Request completed",
+		requestLogger.Info("Request completed",
 			zap.String("method", c.Request.Method),
 			zap.String("path", c.Request.URL.Path),
 			zap.Int("status", c.Writer.Status()),
