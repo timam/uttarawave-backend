@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/timam/uttarawave-backend/cmd"
-	"github.com/timam/uttarawave-backend/cmd/server"
 	"github.com/timam/uttarawave-backend/internals/configs"
 	"github.com/timam/uttarawave-backend/pkg/db"
 	"github.com/timam/uttarawave-backend/pkg/logger"
@@ -47,7 +46,7 @@ func init() {
 }
 
 func serve() error {
-	serverInstance, err := server.InitializeServer()
+	serverInstance, err := cmd.InitializeServer()
 	if err != nil {
 		return fmt.Errorf("server initialization failed: %w", err)
 	}

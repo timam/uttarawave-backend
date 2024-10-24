@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/viper"
-	"github.com/timam/uttarawave-backend/cmd/server"
+	"github.com/timam/uttarawave-backend/cmd"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.uber.org/zap"
 	"os"
@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-var serverInstance *server.Server
+var serverInstance *cmd.Server
 
 func InitializeConfig() error {
 	_, filename, _, ok := runtime.Caller(0)
@@ -95,7 +95,7 @@ func loadIndividualConfig(path string) error {
 				logger.Info("Server configuration changed, reloading server")
 
 				if serverInstance == nil {
-					serverInstance, err = server.InitializeServer()
+					serverInstance, err = cmd.InitializeServer()
 					if err != nil {
 						logger.Error("Error initializing server", zap.String("file", path), zap.Error(err))
 					}
