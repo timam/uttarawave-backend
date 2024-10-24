@@ -4,9 +4,9 @@ import (
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	response2 "github.com/timam/uttarawave-backend/api/response"
 	models2 "github.com/timam/uttarawave-backend/internals/models"
 	repositories2 "github.com/timam/uttarawave-backend/internals/repositories"
-	"github.com/timam/uttarawave-backend/internals/response"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.uber.org/zap"
 	"net/http"
@@ -45,14 +45,14 @@ func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 
 		if err := c.ShouldBindJSON(&customerInput); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
-			response.Error(c, http.StatusBadRequest, "Invalid input", err.Error())
+			response2.Error(c, http.StatusBadRequest, "Invalid input", err.Error())
 			return
 		}
 
 		if customerInput.Mobile == "" || customerInput.Name == "" {
 			err := errors.New("mobile and name are required fields")
 			logger.Warn("Missing required fields")
-			response.Error(c, http.StatusBadRequest, "Missing required fields", err.Error())
+			response2.Error(c, http.StatusBadRequest, "Missing required fields", err.Error())
 			return
 		}
 
@@ -60,14 +60,14 @@ func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 		if customerInput.Type == "" {
 			err := errors.New("customer type is required")
 			logger.Warn("Missing customer type")
-			response.Error(c, http.StatusBadRequest, "Customer type is required", err.Error())
+			response2.Error(c, http.StatusBadRequest, "Customer type is required", err.Error())
 			return
 		}
 
 		if customerInput.Type != string(models2.Individual) && customerInput.Type != string(models2.Business) {
 			err := errors.New("invalid customer type")
 			logger.Warn("Invalid customer type", zap.String("type", customerInput.Type))
-			response.Error(c, http.StatusBadRequest, "Invalid customer type", err.Error())
+			response2.Error(c, http.StatusBadRequest, "Invalid customer type", err.Error())
 			return
 		}
 
@@ -94,14 +94,14 @@ func (h *CustomerHandler) CreateCustomer() gin.HandlerFunc {
 		err := h.repo.CreateCustomer(c.Request.Context(), &customer)
 		if err != nil {
 			logger.Error("Failed to save customer data", zap.Error(err))
-			response.Error(c, http.StatusInternalServerError, "Failed to save customer data", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to save customer data", err.Error())
 			return
 		}
 
 		logger.Info("Customer created successfully", zap.String("id", customer.ID), zap.String("mobile", customer.Mobile))
 
-		customerItemResponse := response.NewCustomerItemResponse(&customer)
-		response.Success(c, http.StatusCreated, "Customer created successfully", customerItemResponse)
+		customerItemResponse := response2.NewCustomerItemResponse(&customer)
+		response2.Success(c, http.StatusCreated, "Customer created successfully", customerItemResponse)
 	}
 }
 
@@ -117,17 +117,17 @@ func (h *CustomerHandler) GetCustomer() gin.HandlerFunc {
 		customer, err := h.repo.GetCustomerByMobile(mobile)
 		if err != nil {
 			logger.Error("Failed to get customer data", zap.Error(err))
-			response.Error(c, http.StatusInternalServerError, "Failed to get customer data", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to get customer data", err.Error())
 			return
 		}
 		if customer == nil {
 			err := errors.New("customer not found")
-			response.Error(c, http.StatusNotFound, "Customer not found", err.Error())
+			response2.Error(c, http.StatusNotFound, "Customer not found", err.Error())
 			return
 		}
 
-		customerItemResponse := response.NewCustomerItemResponse(customer)
-		response.Success(c, http.StatusOK, "Customer retrieved successfully", customerItemResponse)
+		customerItemResponse := response2.NewCustomerItemResponse(customer)
+		response2.Success(c, http.StatusOK, "Customer retrieved successfully", customerItemResponse)
 	}
 }
 
@@ -139,12 +139,12 @@ func (h *CustomerHandler) GetAllCustomers() gin.HandlerFunc {
 		customers, totalCount, err := h.repo.GetCustomersPaginated(page, pageSize)
 		if err != nil {
 			logger.Error("Failed to get customers", zap.Error(err))
-			response.Error(c, http.StatusInternalServerError, "Failed to get customers", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to get customers", err.Error())
 			return
 		}
 
-		customerListResponse := response.NewCustomerListResponse(customers, int64(totalCount), page, pageSize)
-		response.Success(c, http.StatusOK, "Customers retrieved successfully", customerListResponse)
+		customerListResponse := response2.NewCustomerListResponse(customers, int64(totalCount), page, pageSize)
+		response2.Success(c, http.StatusOK, "Customers retrieved successfully", customerListResponse)
 	}
 }
 
@@ -156,33 +156,33 @@ func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
 		if id == "" {
 			err := errors.New("customer ID must be provided")
 			logger.Warn("Customer ID not provided")
-			response.Error(c, http.StatusBadRequest, "Customer ID must be provided", err.Error())
+			response2.Error(c, http.StatusBadRequest, "Customer ID must be provided", err.Error())
 			return
 		}
 
 		var updateData models2.Customer
 		if err := c.ShouldBindJSON(&updateData); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
-			response.Error(c, http.StatusBadRequest, "Invalid input", err.Error())
+			response2.Error(c, http.StatusBadRequest, "Invalid input", err.Error())
 			return
 		}
 
 		existingCustomer, err := h.repo.GetCustomer(id)
 		if err != nil {
 			logger.Error("Failed to find customer", zap.Error(err))
-			response.Error(c, http.StatusInternalServerError, "Failed to find customer", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to find customer", err.Error())
 			return
 		}
 		if existingCustomer == nil {
 			err := errors.New("customer not found")
 			logger.Warn("Customer not found", zap.String("id", id))
-			response.Error(c, http.StatusNotFound, "Customer not found", err.Error())
+			response2.Error(c, http.StatusNotFound, "Customer not found", err.Error())
 			return
 		}
 
 		if updateData.Mobile != "" && updateData.Mobile != existingCustomer.Mobile {
 			err := errors.New("mobile number cannot be updated")
-			response.Error(c, http.StatusBadRequest, "Mobile number cannot be updated", err.Error())
+			response2.Error(c, http.StatusBadRequest, "Mobile number cannot be updated", err.Error())
 			return
 		}
 
@@ -195,7 +195,7 @@ func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
 			building, err := h.buildingRepo.GetBuildingByID(c.Request.Context(), *updateData.Address.BuildingID)
 			if err != nil {
 				logger.Error("Failed to get building details", zap.Error(err))
-				response.Error(c, http.StatusInternalServerError, "Failed to get building details", err.Error())
+				response2.Error(c, http.StatusInternalServerError, "Failed to get building details", err.Error())
 				return
 			}
 			existingCustomer.Address = building.Address
@@ -205,7 +205,7 @@ func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
 		} else {
 			if updateData.Address.House == "" || updateData.Address.Road == "" || updateData.Address.Block == "" || updateData.Address.Area == "" {
 				err := errors.New("all address fields (House, Road, Block, Area) are required when BuildingID is not provided")
-				response.Error(c, http.StatusBadRequest, "Invalid address input", err.Error())
+				response2.Error(c, http.StatusBadRequest, "Invalid address input", err.Error())
 				return
 			}
 			existingCustomer.Address = updateData.Address
@@ -217,13 +217,13 @@ func (h *CustomerHandler) UpdateCustomer() gin.HandlerFunc {
 		err = h.repo.UpdateCustomer(existingCustomer)
 		if err != nil {
 			logger.Error("Failed to update customer data", zap.Error(err))
-			response.Error(c, http.StatusInternalServerError, "Failed to update customer data", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to update customer data", err.Error())
 			return
 		}
 
 		logger.Info("Customer updated successfully", zap.String("id", existingCustomer.ID), zap.String("name", existingCustomer.Name))
-		customerItemResponse := response.NewCustomerItemResponse(existingCustomer)
-		response.Success(c, http.StatusOK, "Customer updated successfully", customerItemResponse)
+		customerItemResponse := response2.NewCustomerItemResponse(existingCustomer)
+		response2.Success(c, http.StatusOK, "Customer updated successfully", customerItemResponse)
 	}
 }
 
@@ -234,28 +234,28 @@ func (h *CustomerHandler) DeleteCustomer() gin.HandlerFunc {
 
 		if mobile == "" {
 			err := errors.New("mobile number must be provided")
-			response.Error(c, http.StatusBadRequest, "Mobile number must be provided", err.Error())
+			response2.Error(c, http.StatusBadRequest, "Mobile number must be provided", err.Error())
 			return
 		}
 
 		customer, err := h.repo.GetCustomerByMobile(mobile)
 		if err != nil {
 			logger.Error("Failed to find customer by mobile", zap.Error(err))
-			response.Error(c, http.StatusInternalServerError, "Failed to find customer by mobile", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to find customer by mobile", err.Error())
 			return
 		}
 		if customer == nil {
 			err := errors.New("customer not found")
-			response.Error(c, http.StatusNotFound, "Customer not found", err.Error())
+			response2.Error(c, http.StatusNotFound, "Customer not found", err.Error())
 			return
 		}
 
 		if err := h.repo.DeleteCustomer(customer.ID); err != nil {
 			logger.Error("Failed to delete customer by mobile", zap.Error(err))
-			response.Error(c, http.StatusInternalServerError, "Failed to delete customer", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to delete customer", err.Error())
 			return
 		}
 
-		response.Success(c, http.StatusOK, "Customer deleted successfully", nil)
+		response2.Success(c, http.StatusOK, "Customer deleted successfully", nil)
 	}
 }

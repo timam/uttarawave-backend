@@ -3,9 +3,9 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	response2 "github.com/timam/uttarawave-backend/api/response"
 	"github.com/timam/uttarawave-backend/internals/models"
 	"github.com/timam/uttarawave-backend/internals/repositories"
-	"github.com/timam/uttarawave-backend/internals/response"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.uber.org/zap"
 	"net/http"
@@ -27,14 +27,14 @@ func (h *DeviceHandler) CreateDevice() gin.HandlerFunc {
 		var device models.Device
 		if err := c.ShouldBindJSON(&device); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
-			c.JSON(http.StatusBadRequest, response.NewDeviceResponse(http.StatusBadRequest, "Invalid input", nil))
+			c.JSON(http.StatusBadRequest, response2.NewDeviceResponse(http.StatusBadRequest, "Invalid input", nil))
 			return
 		}
 
 		device.ID = uuid.New().String()
 
 		if device.Brand == "" || device.Model == "" || device.SerialNumber == "" || device.Type == "" {
-			c.JSON(http.StatusBadRequest, response.NewDeviceResponse(http.StatusBadRequest, "Invalid input", "Brand, Model, SerialNumber, and Type are required"))
+			c.JSON(http.StatusBadRequest, response2.NewDeviceResponse(http.StatusBadRequest, "Invalid input", "Brand, Model, SerialNumber, and Type are required"))
 			return
 		}
 
@@ -54,13 +54,13 @@ func (h *DeviceHandler) CreateDevice() gin.HandlerFunc {
 		err := h.repo.CreateDevice(c.Request.Context(), &device)
 		if err != nil {
 			logger.Error("Failed to create device", zap.Error(err))
-			response.Error(c, http.StatusInternalServerError, "Failed to create device", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to create device", err.Error())
 			return
 		}
 
 		logger.Info("Device created successfully", zap.String("id", device.ID))
-		deviceItemResponse := response.NewDeviceItemResponse(&device)
-		response.Success(c, http.StatusCreated, "Device created successfully", deviceItemResponse)
+		deviceItemResponse := response2.NewDeviceItemResponse(&device)
+		response2.Success(c, http.StatusCreated, "Device created successfully", deviceItemResponse)
 	}
 }
 
@@ -70,16 +70,16 @@ func (h *DeviceHandler) GetDevice() gin.HandlerFunc {
 		device, err := h.repo.GetDeviceByID(c.Request.Context(), id)
 		if err != nil {
 			logger.Error("Failed to get device", zap.Error(err))
-			response.Error(c, http.StatusInternalServerError, "Failed to get device", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to get device", err.Error())
 			return
 		}
 		if device == nil {
-			response.Error(c, http.StatusNotFound, "Device not found", "No device found with the given ID")
+			response2.Error(c, http.StatusNotFound, "Device not found", "No device found with the given ID")
 			return
 		}
 
-		deviceItemResponse := response.NewDeviceItemResponse(device)
-		response.Success(c, http.StatusOK, "Device retrieved successfully", deviceItemResponse)
+		deviceItemResponse := response2.NewDeviceItemResponse(device)
+		response2.Success(c, http.StatusOK, "Device retrieved successfully", deviceItemResponse)
 	}
 }
 
@@ -89,14 +89,14 @@ func (h *DeviceHandler) UpdateDevice() gin.HandlerFunc {
 		var updatedDevice models.Device
 		if err := c.ShouldBindJSON(&updatedDevice); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
-			c.JSON(http.StatusBadRequest, response.NewDeviceResponse(http.StatusBadRequest, "Invalid input", nil))
+			c.JSON(http.StatusBadRequest, response2.NewDeviceResponse(http.StatusBadRequest, "Invalid input", nil))
 			return
 		}
 
 		existingDevice, err := h.repo.GetDeviceByID(c.Request.Context(), id)
 		if err != nil {
 			logger.Error("Failed to get existing device", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, response.NewDeviceResponse(http.StatusInternalServerError, "Failed to get existing device", nil))
+			c.JSON(http.StatusInternalServerError, response2.NewDeviceResponse(http.StatusInternalServerError, "Failed to get existing device", nil))
 			return
 		}
 
@@ -112,12 +112,12 @@ func (h *DeviceHandler) UpdateDevice() gin.HandlerFunc {
 		err = h.repo.UpdateDevice(c.Request.Context(), existingDevice)
 		if err != nil {
 			logger.Error("Failed to update device", zap.Error(err))
-			response.Error(c, http.StatusInternalServerError, "Failed to update device", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to update device", err.Error())
 			return
 		}
 
-		deviceItemResponse := response.NewDeviceItemResponse(existingDevice)
-		response.Success(c, http.StatusOK, "Device updated successfully", deviceItemResponse)
+		deviceItemResponse := response2.NewDeviceItemResponse(existingDevice)
+		response2.Success(c, http.StatusOK, "Device updated successfully", deviceItemResponse)
 	}
 }
 
@@ -127,11 +127,11 @@ func (h *DeviceHandler) DeleteDevice() gin.HandlerFunc {
 		err := h.repo.DeleteDevice(c.Request.Context(), id)
 		if err != nil {
 			logger.Error("Failed to delete device", zap.Error(err))
-			response.Error(c, http.StatusInternalServerError, "Failed to delete device", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to delete device", err.Error())
 			return
 		}
 
-		response.Success(c, http.StatusOK, "Device deleted successfully", nil)
+		response2.Success(c, http.StatusOK, "Device deleted successfully", nil)
 	}
 }
 
@@ -143,12 +143,12 @@ func (h *DeviceHandler) GetAllDevices() gin.HandlerFunc {
 		devices, totalCount, err := h.repo.GetAllDevices(c.Request.Context(), page, pageSize)
 		if err != nil {
 			logger.Error("Failed to get all devices", zap.Error(err))
-			response.Error(c, http.StatusInternalServerError, "Failed to get all devices", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to get all devices", err.Error())
 			return
 		}
 
-		deviceListResponse := response.NewDeviceListResponse(devices, int64(totalCount), page, pageSize)
-		response.Success(c, http.StatusOK, "Devices retrieved successfully", deviceListResponse)
+		deviceListResponse := response2.NewDeviceListResponse(devices, int64(totalCount), page, pageSize)
+		response2.Success(c, http.StatusOK, "Devices retrieved successfully", deviceListResponse)
 	}
 }
 
@@ -161,22 +161,22 @@ func (h *DeviceHandler) AssignDevice() gin.HandlerFunc {
 		}
 		if err := c.ShouldBindJSON(&request); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
-			c.JSON(http.StatusBadRequest, response.NewDeviceResponse(http.StatusBadRequest, "Invalid input", nil))
+			c.JSON(http.StatusBadRequest, response2.NewDeviceResponse(http.StatusBadRequest, "Invalid input", nil))
 			return
 		}
 		if request.AssignmentType == "" || request.AssignmentID == "" {
-			c.JSON(http.StatusBadRequest, response.NewDeviceResponse(http.StatusBadRequest, "Invalid input", "Assignment type and ID are required"))
+			c.JSON(http.StatusBadRequest, response2.NewDeviceResponse(http.StatusBadRequest, "Invalid input", "Assignment type and ID are required"))
 			return
 		}
 
 		err := h.repo.AssignDevice(c.Request.Context(), deviceID, request.AssignmentType, request.AssignmentID)
 		if err != nil {
 			logger.Error("Failed to assign device", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, response.NewDeviceResponse(http.StatusInternalServerError, "Failed to assign device", nil))
+			c.JSON(http.StatusInternalServerError, response2.NewDeviceResponse(http.StatusInternalServerError, "Failed to assign device", nil))
 			return
 		}
 
-		c.JSON(http.StatusOK, response.NewDeviceResponse(http.StatusOK, "Device assigned successfully", nil))
+		c.JSON(http.StatusOK, response2.NewDeviceResponse(http.StatusOK, "Device assigned successfully", nil))
 	}
 }
 
@@ -187,11 +187,11 @@ func (h *DeviceHandler) UnassignDevice() gin.HandlerFunc {
 		err := h.repo.UnassignDevice(c.Request.Context(), deviceID)
 		if err != nil {
 			logger.Error("Failed to unassign device", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, response.NewDeviceResponse(http.StatusInternalServerError, "Failed to unassign device", nil))
+			c.JSON(http.StatusInternalServerError, response2.NewDeviceResponse(http.StatusInternalServerError, "Failed to unassign device", nil))
 			return
 		}
 
-		c.JSON(http.StatusOK, response.NewDeviceResponse(http.StatusOK, "Device unassigned successfully", nil))
+		c.JSON(http.StatusOK, response2.NewDeviceResponse(http.StatusOK, "Device unassigned successfully", nil))
 	}
 }
 
@@ -200,23 +200,23 @@ func (h *DeviceHandler) GetDeviceByAssignment() gin.HandlerFunc {
 		assignmentType := c.Query("assignmentType")
 		assignmentID := c.Query("assignmentId")
 		if assignmentType == "" || assignmentID == "" {
-			c.JSON(http.StatusBadRequest, response.NewDeviceResponse(http.StatusBadRequest, "Invalid input", "Assignment type and ID are required"))
+			c.JSON(http.StatusBadRequest, response2.NewDeviceResponse(http.StatusBadRequest, "Invalid input", "Assignment type and ID are required"))
 			return
 		}
 
 		device, err := h.repo.GetDeviceByAssignment(c.Request.Context(), assignmentType, assignmentID)
 		if err != nil {
 			logger.Error("Failed to get device by assignment", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, response.NewDeviceResponse(http.StatusInternalServerError, "Failed to get device", nil))
+			c.JSON(http.StatusInternalServerError, response2.NewDeviceResponse(http.StatusInternalServerError, "Failed to get device", nil))
 			return
 		}
 
 		if device == nil {
-			c.JSON(http.StatusNotFound, response.NewDeviceResponse(http.StatusNotFound, "Device not found", "No device found for this assignment"))
+			c.JSON(http.StatusNotFound, response2.NewDeviceResponse(http.StatusNotFound, "Device not found", "No device found for this assignment"))
 			return
 		}
 
-		deviceItemResponse := response.NewDeviceItemResponse(device)
-		c.JSON(http.StatusOK, response.NewDeviceResponse(http.StatusOK, "Device retrieved successfully", deviceItemResponse))
+		deviceItemResponse := response2.NewDeviceItemResponse(device)
+		c.JSON(http.StatusOK, response2.NewDeviceResponse(http.StatusOK, "Device retrieved successfully", deviceItemResponse))
 	}
 }

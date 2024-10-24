@@ -3,9 +3,9 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	response2 "github.com/timam/uttarawave-backend/api/response"
 	"github.com/timam/uttarawave-backend/internals/models"
 	"github.com/timam/uttarawave-backend/internals/repositories"
-	"github.com/timam/uttarawave-backend/internals/response"
 	"net/http"
 	"strconv"
 )
@@ -22,7 +22,7 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var pkg models.Package
 		if err := c.ShouldBindJSON(&pkg); err != nil {
-			c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Invalid input", nil))
+			c.JSON(http.StatusBadRequest, response2.NewPackageResponse(http.StatusBadRequest, "Invalid input", nil))
 			return
 		}
 
@@ -31,7 +31,7 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 
 		// Validate mandatory fields for all package types
 		if pkg.Type == "" || pkg.Name == "" || pkg.Price == 0 {
-			c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Missing required fields", nil))
+			c.JSON(http.StatusBadRequest, response2.NewPackageResponse(http.StatusBadRequest, "Missing required fields", nil))
 			return
 		}
 
@@ -39,34 +39,34 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 		switch pkg.Type {
 		case models.CableTVPackage:
 			if pkg.ChannelCount == 0 || pkg.TVCount == 0 {
-				c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Missing required fields for Cable TV package", nil))
+				c.JSON(http.StatusBadRequest, response2.NewPackageResponse(http.StatusBadRequest, "Missing required fields for Cable TV package", nil))
 				return
 			}
 		case models.InternetPackage:
 			if pkg.Bandwidth == 0 || pkg.BandwidthType == "" {
-				c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Missing required fields for Internet package", nil))
+				c.JSON(http.StatusBadRequest, response2.NewPackageResponse(http.StatusBadRequest, "Missing required fields for Internet package", nil))
 				return
 			}
 		default:
-			c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Invalid package type", nil))
+			c.JSON(http.StatusBadRequest, response2.NewPackageResponse(http.StatusBadRequest, "Invalid package type", nil))
 			return
 		}
 
 		err := h.repo.CreatePackage(c.Request.Context(), &pkg)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, response.NewPackageResponse(http.StatusInternalServerError, "Failed to create package", nil))
+			c.JSON(http.StatusInternalServerError, response2.NewPackageResponse(http.StatusInternalServerError, "Failed to create package", nil))
 			return
 		}
 
 		var responseData interface{}
 		switch pkg.Type {
 		case models.CableTVPackage:
-			responseData = response.NewTVPackageResponse(&pkg)
+			responseData = response2.NewTVPackageResponse(&pkg)
 		case models.InternetPackage:
-			responseData = response.NewInternetPackageResponse(&pkg)
+			responseData = response2.NewInternetPackageResponse(&pkg)
 		}
 
-		c.JSON(http.StatusCreated, response.NewPackageResponse(http.StatusCreated, "Package created successfully", responseData))
+		c.JSON(http.StatusCreated, response2.NewPackageResponse(http.StatusCreated, "Package created successfully", responseData))
 	}
 }
 
@@ -78,7 +78,7 @@ func (h *PackageHandler) GetAllPackages() gin.HandlerFunc {
 
 		packages, total, err := h.repo.GetAllPackages(c.Request.Context(), packageType, page, pageSize)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, response.NewPackageResponse(http.StatusInternalServerError, "Failed to fetch packages", nil))
+			c.JSON(http.StatusInternalServerError, response2.NewPackageResponse(http.StatusInternalServerError, "Failed to fetch packages", nil))
 			return
 		}
 
@@ -86,15 +86,15 @@ func (h *PackageHandler) GetAllPackages() gin.HandlerFunc {
 		for _, pkg := range packages {
 			switch pkg.Type {
 			case models.CableTVPackage:
-				responsePackages = append(responsePackages, response.NewTVPackageResponse(&pkg))
+				responsePackages = append(responsePackages, response2.NewTVPackageResponse(&pkg))
 			case models.InternetPackage:
-				responsePackages = append(responsePackages, response.NewInternetPackageResponse(&pkg))
+				responsePackages = append(responsePackages, response2.NewInternetPackageResponse(&pkg))
 			}
 		}
 
-		listResponse := response.NewPackageListResponse(responsePackages, total, page, pageSize)
+		listResponse := response2.NewPackageListResponse(responsePackages, total, page, pageSize)
 		data := gin.H{"packages": listResponse}
-		c.JSON(http.StatusOK, response.NewPackageResponse(http.StatusOK, "Packages retrieved successfully", data))
+		c.JSON(http.StatusOK, response2.NewPackageResponse(http.StatusOK, "Packages retrieved successfully", data))
 	}
 }
 
@@ -103,22 +103,22 @@ func (h *PackageHandler) GetPackageByID() gin.HandlerFunc {
 		id := c.Param("id")
 		pkg, err := h.repo.GetPackageByID(c.Request.Context(), id)
 		if err != nil {
-			response.Error(c, http.StatusNotFound, "Package not found", err.Error())
+			response2.Error(c, http.StatusNotFound, "Package not found", err.Error())
 			return
 		}
 
 		var responseData interface{}
 		switch pkg.Type {
 		case models.CableTVPackage:
-			responseData = response.NewTVPackageResponse(pkg)
+			responseData = response2.NewTVPackageResponse(pkg)
 		case models.InternetPackage:
-			responseData = response.NewInternetPackageResponse(pkg)
+			responseData = response2.NewInternetPackageResponse(pkg)
 		default:
-			response.Error(c, http.StatusInternalServerError, "Invalid package type", "Unknown package type")
+			response2.Error(c, http.StatusInternalServerError, "Invalid package type", "Unknown package type")
 			return
 		}
 
-		response.Success(c, http.StatusOK, "Package retrieved successfully", responseData)
+		response2.Success(c, http.StatusOK, "Package retrieved successfully", responseData)
 	}
 }
 
@@ -128,16 +128,16 @@ func (h *PackageHandler) DeletePackage() gin.HandlerFunc {
 
 		_, err := h.repo.GetPackageByID(c.Request.Context(), id)
 		if err != nil {
-			response.Error(c, http.StatusNotFound, "Package not found", err.Error())
+			response2.Error(c, http.StatusNotFound, "Package not found", err.Error())
 			return
 		}
 
 		err = h.repo.DeletePackage(c.Request.Context(), id)
 		if err != nil {
-			response.Error(c, http.StatusInternalServerError, "Failed to delete package", err.Error())
+			response2.Error(c, http.StatusInternalServerError, "Failed to delete package", err.Error())
 			return
 		}
 
-		response.Success(c, http.StatusOK, "Package deleted successfully", nil)
+		response2.Success(c, http.StatusOK, "Package deleted successfully", nil)
 	}
 }
