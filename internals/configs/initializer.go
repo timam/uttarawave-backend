@@ -9,13 +9,18 @@ import (
 	"go.uber.org/zap"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
 var serverInstance *server.Server
 
 func InitializeConfig() error {
-	configDir := "./config/"
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		return fmt.Errorf("unable to get the current filename")
+	}
+	configDir := filepath.Dir(filename)
 
 	files, err := os.ReadDir(configDir)
 	if err != nil {
