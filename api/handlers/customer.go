@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/timam/uttarawave-backend/api/response"
 	"github.com/timam/uttarawave-backend/internals/models"
-	repositories "github.com/timam/uttarawave-backend/internals/repositories"
+	"github.com/timam/uttarawave-backend/internals/repositories"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.uber.org/zap"
 	"net/http"

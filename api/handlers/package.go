@@ -22,7 +22,7 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var pkg models.Package
 		if err := c.ShouldBindJSON(&pkg); err != nil {
-			c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Invalid input", nil))
+			response.Error(c, http.StatusBadRequest, "Invalid input", err.Error())
 			return
 		}
 
@@ -31,7 +31,7 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 
 		// Validate mandatory fields for all package types
 		if pkg.Type == "" || pkg.Name == "" || pkg.Price == 0 {
-			c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Missing required fields", nil))
+			response.Error(c, http.StatusBadRequest, "Missing required fields", "Type, name, and price are required")
 			return
 		}
 
@@ -39,22 +39,22 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 		switch pkg.Type {
 		case models.CableTVPackage:
 			if pkg.ChannelCount == nil || *pkg.ChannelCount == 0 || pkg.TVCount == nil || *pkg.TVCount == 0 {
-				c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Missing required fields for Cable TV package", nil))
+				response.Error(c, http.StatusBadRequest, "Missing required fields for Cable TV package", "Channel count and TV count are required")
 				return
 			}
 		case models.InternetPackage:
 			if pkg.Bandwidth == nil || *pkg.Bandwidth == 0 || pkg.BandwidthType == nil || *pkg.BandwidthType == "" {
-				c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Missing required fields for Internet package", nil))
+				response.Error(c, http.StatusBadRequest, "Missing required fields for Internet package", "Bandwidth and bandwidth type are required")
 				return
 			}
 		default:
-			c.JSON(http.StatusBadRequest, response.NewPackageResponse(http.StatusBadRequest, "Invalid package type", nil))
+			response.Error(c, http.StatusBadRequest, "Invalid package type", "Specified package type is not supported")
 			return
 		}
 
 		err := h.repo.CreatePackage(c.Request.Context(), &pkg)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, response.NewPackageResponse(http.StatusInternalServerError, "Failed to create package", nil))
+			response.Error(c, http.StatusInternalServerError, "Failed to create package", err.Error())
 			return
 		}
 
@@ -66,7 +66,7 @@ func (h *PackageHandler) CreatePackage() gin.HandlerFunc {
 			responseData = response.NewInternetPackageResponse(&pkg)
 		}
 
-		c.JSON(http.StatusCreated, response.NewPackageResponse(http.StatusCreated, "Package created successfully", responseData))
+		response.Success(c, http.StatusCreated, "Package created successfully", responseData)
 	}
 }
 

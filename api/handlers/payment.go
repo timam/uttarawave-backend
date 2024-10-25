@@ -3,8 +3,8 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	models "github.com/timam/uttarawave-backend/internals/models"
-	repositories "github.com/timam/uttarawave-backend/internals/repositories"
+	"github.com/timam/uttarawave-backend/internals/models"
+	"github.com/timam/uttarawave-backend/internals/repositories"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.uber.org/zap"
 	"net/http"
