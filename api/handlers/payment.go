@@ -3,8 +3,8 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	models2 "github.com/timam/uttarawave-backend/internals/models"
-	repositories2 "github.com/timam/uttarawave-backend/internals/repositories"
+	models "github.com/timam/uttarawave-backend/internals/models"
+	repositories "github.com/timam/uttarawave-backend/internals/repositories"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.uber.org/zap"
 	"net/http"
@@ -13,12 +13,12 @@ import (
 )
 
 type PaymentHandler struct {
-	paymentRepo      repositories2.PaymentRepository
-	subscriptionRepo repositories2.SubscriptionRepository
-	invoiceRepo      repositories2.InvoiceRepository
+	paymentRepo      repositories.PaymentRepository
+	subscriptionRepo repositories.SubscriptionRepository
+	invoiceRepo      repositories.InvoiceRepository
 }
 
-func NewPaymentHandler(pr repositories2.PaymentRepository, sr repositories2.SubscriptionRepository, ir repositories2.InvoiceRepository) *PaymentHandler {
+func NewPaymentHandler(pr repositories.PaymentRepository, sr repositories.SubscriptionRepository, ir repositories.InvoiceRepository) *PaymentHandler {
 	return &PaymentHandler{
 		paymentRepo:      pr,
 		subscriptionRepo: sr,
@@ -28,7 +28,7 @@ func NewPaymentHandler(pr repositories2.PaymentRepository, sr repositories2.Subs
 
 func (h *PaymentHandler) CreatePayment() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var payment models2.Payment
+		var payment models.Payment
 		if err := c.ShouldBindJSON(&payment); err != nil {
 			logger.Error("Failed to bind JSON", zap.Error(err))
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -46,16 +46,16 @@ func (h *PaymentHandler) CreatePayment() gin.HandlerFunc {
 				return
 			}
 
-			if invoice.Status == models2.InvoicePaid {
+			if invoice.Status == models.InvoicePaid {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Invoice is already paid"})
 				return
 			}
 
 			if payment.Amount >= invoice.Amount {
-				invoice.Status = models2.InvoicePaid
+				invoice.Status = models.InvoicePaid
 				invoice.PaidDate = &payment.PaidAt
 			} else {
-				invoice.Status = models2.InvoicePending
+				invoice.Status = models.InvoicePending
 			}
 
 			err = h.invoiceRepo.UpdateInvoice(c.Request.Context(), invoice)

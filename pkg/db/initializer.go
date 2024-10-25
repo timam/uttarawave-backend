@@ -5,7 +5,7 @@ package db
 import (
 	"fmt"
 	"github.com/spf13/viper"
-	models2 "github.com/timam/uttarawave-backend/internals/models"
+	models "github.com/timam/uttarawave-backend/internals/models"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"go.uber.org/zap"
 	"gorm.io/driver/postgres"
@@ -41,14 +41,14 @@ func InitializePostgreSQL() error {
 
 	// Auto Migrate the schema
 	tables := []interface{}{
-		&models2.Address{},
-		&models2.Building{},
-		&models2.Customer{},
-		&models2.Package{},
-		&models2.Device{},
-		&models2.Subscription{},
-		&models2.Payment{},
-		&models2.Expense{},
+		&models.Address{},
+		&models.Building{},
+		&models.Customer{},
+		&models.Package{},
+		&models.Device{},
+		&models.Subscription{},
+		&models.Payment{},
+		&models.Expense{},
 	}
 
 	for _, table := range tables {

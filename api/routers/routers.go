@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
 	handlers2 "github.com/timam/uttarawave-backend/api/handlers"
-	middlewares2 "github.com/timam/uttarawave-backend/api/middlewares"
-	repositories2 "github.com/timam/uttarawave-backend/internals/repositories"
+	middlewares "github.com/timam/uttarawave-backend/api/middlewares"
+	repositories "github.com/timam/uttarawave-backend/internals/repositories"
 	"github.com/timam/uttarawave-backend/pkg/logger"
 	"github.com/timam/uttarawave-backend/pkg/metrics"
 )
@@ -23,15 +23,15 @@ func InitRouter() *gin.Engine {
 	router.Use(gin.Recovery())
 
 	// Always apply the middlewares
-	router.Use(middlewares2.TracingLoggerMiddleware())
-	router.Use(middlewares2.MetricsMiddleware())
+	router.Use(middlewares.TracingLoggerMiddleware())
+	router.Use(middlewares.MetricsMiddleware())
 
 	logger.Info("Initializing router")
 	router.GET("/metrics", metrics.MetricsHandler())
 
 	apiV1 := router.Group("/api/v1")
 
-	packageRepo := repositories2.NewGormPackageRepository()
+	packageRepo := repositories.NewGormPackageRepository()
 	packageHandler := handlers2.NewPackageHandler(packageRepo)
 	packageRoutes := apiV1.Group("/packages")
 	{
@@ -41,7 +41,7 @@ func InitRouter() *gin.Engine {
 		packageRoutes.DELETE("/:id", packageHandler.DeletePackage())
 	}
 
-	buildingRepo := repositories2.NewGormBuildingRepository()
+	buildingRepo := repositories.NewGormBuildingRepository()
 	buildingRoutes := apiV1.Group("/buildings")
 	{
 		buildingHandler := handlers2.NewBuildingHandler()
@@ -52,7 +52,7 @@ func InitRouter() *gin.Engine {
 		buildingRoutes.DELETE("/:id", buildingHandler.DeleteBuilding())
 	}
 
-	deviceRepo := repositories2.NewGormDeviceRepository()
+	deviceRepo := repositories.NewGormDeviceRepository()
 	deviceHandler := handlers2.NewDeviceHandler(deviceRepo)
 	deviceRoutes := apiV1.Group("/devices")
 	{
@@ -66,9 +66,9 @@ func InitRouter() *gin.Engine {
 		deviceRoutes.GET("/by-assignment", deviceHandler.GetDeviceByAssignment())
 	}
 
-	invoiceRepo := repositories2.NewGormInvoiceRepository()
+	invoiceRepo := repositories.NewGormInvoiceRepository()
 
-	subscriptionRepo := repositories2.NewGormSubscriptionRepository()
+	subscriptionRepo := repositories.NewGormSubscriptionRepository()
 	subscriptionHandler := handlers2.NewSubscriptionHandler(subscriptionRepo, packageRepo, deviceRepo, invoiceRepo)
 	subscriptionRoutes := apiV1.Group("/subscriptions")
 	{
@@ -79,7 +79,7 @@ func InitRouter() *gin.Engine {
 		subscriptionRoutes.GET("", subscriptionHandler.GetAllSubscriptions())
 	}
 
-	customerRepo := repositories2.NewGormCustomerRepository()
+	customerRepo := repositories.NewGormCustomerRepository()
 	customerHandler := handlers2.NewCustomerHandler(customerRepo, buildingRepo)
 	customerRoutes := apiV1.Group("/customers")
 	{
@@ -90,7 +90,7 @@ func InitRouter() *gin.Engine {
 		customerRoutes.GET("/all", customerHandler.GetAllCustomers())
 	}
 
-	paymentRepo := repositories2.NewGormPaymentRepository()
+	paymentRepo := repositories.NewGormPaymentRepository()
 	paymentHandler := handlers2.NewPaymentHandler(paymentRepo, subscriptionRepo, invoiceRepo)
 	invoiceHandler := handlers2.NewInvoiceHandler(invoiceRepo, subscriptionRepo)
 
@@ -108,7 +108,7 @@ func InitRouter() *gin.Engine {
 		//invoiceRoutes.GET("", invoiceHandler.GetAllInvoices())
 	}
 
-	expenseRepo := repositories2.NewGormExpenseRepository()
+	expenseRepo := repositories.NewGormExpenseRepository()
 	expenseHandler := handlers2.NewExpenseHandler(expenseRepo)
 
 	expenseRoutes := apiV1.Group("/expenses")
